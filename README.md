@@ -1,1 +1,3 @@
-R_data_sim
+# data_synth
+
+Synthesizing data using the **R** packages `synthpop` and `fakeR`.
