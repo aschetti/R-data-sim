@@ -1,3 +1,3 @@
-# data_synth
+# Data Simulation in R
 
-Synthesizing data using the **R** packages `synthpop` and `fakeR`.
+Simulate data using the **R** package [`faux`](https://github.com/debruine/faux/).
