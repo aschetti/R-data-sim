@@ -88,7 +88,7 @@ ttest_onesample_data <-
     empirical = FALSE, # data sampled from a population with specified parameters (not exact)
     long = TRUE, # results in long format
     dv = list(value = "value"), # name of dependent variables
-    id = list(participant = "participant"),  # name of ID column
+    id = list(id = "id"),  # name of ID column
     plot = FALSE, # plot
     rep = 1 # number of simulated datasets
   ) %>% 
@@ -114,8 +114,8 @@ write_csv(
 
 ttest_onesample_results <-
   t_test(
-    ttest_onesample_data, # data
-    value ~ 1, # formula
+    data = ttest_onesample_data, # data
+    formula = value ~ 1, # formula
     p.adjust.method = "holm", # p-value adjustment
     paired = FALSE, # paired test?
     var.equal = FALSE, # assume equal variance?
@@ -194,7 +194,7 @@ ttest_between_data <-
     empirical = FALSE,
     long = TRUE,
     dv = list(value = "value"),
-    id = list(participant = "participant"),
+    id = list(id = "id"),
     plot = FALSE,
     rep = 1
   ) %>% 
@@ -220,8 +220,8 @@ write_csv(
 
 ttest_between_results <-
   t_test(
-    ttest_between_data,
-    value ~ treatment,
+    data = ttest_between_data,
+    formula = value ~ treatment,
     p.adjust.method = "holm",
     paired = FALSE,
     var.equal = FALSE,
@@ -309,7 +309,7 @@ ttest_within_data <-
     empirical = FALSE,
     long = TRUE,
     dv = list(value = "value"),
-    id = list(participant = "participant"),
+    id = list(id = "id"),
     plot = FALSE,
     rep = 1
   ) %>% 
@@ -335,8 +335,8 @@ write_csv(
 
 ttest_within_results <-
   t_test(
-    ttest_within_data,
-    value ~ condition,
+    data = ttest_within_data,
+    formula = value ~ condition,
     p.adjust.method = "holm",
     paired = TRUE,
     var.equal = FALSE,
@@ -400,47 +400,193 @@ ggsave(
 
 ```
 
-# 2 x 2 factorial ANOVA
+# 2 x 3 mixed ANOVA
 
 ## Data Simulation
 
-```{r ANOVA-between-data}
+```{r ANOVA-data}
 
 # parameters
-ttest_between_between <- list(treatment = c("control", "drug"))
-ttest_between_n <- c(50, 50)
-ttest_between_mu_cond <- c(1, 2)
-ttest_between_sd_cond <- c(1, 1.2)
+ANOVA_within <- list(condition = c("neutral", "unpleasant", "pleasant"))
+ANOVA_between <- list(treatment = c("control", "drug"))
+ANOVA_n <- list(
+  control = c(neutral = 50, unpleasant = 50, pleasant = 50),
+  drug = c(neutral = 50, unpleasant = 50, pleasant = 50)
+)
+ANOVA_mu_cond <- list(
+  control = c(neutral = 1, unpleasant = 1.5, pleasant = 1.5),
+  drug = c(neutral = 1.5, unpleasant = 2, pleasant = 2.1)
+)
+ANOVA_sd_cond <- list(
+  control = c(neutral = 1, unpleasant = 1.2, pleasant = 1.2),
+  drug = c(neutral = 1.2, unpleasant = 1.2, pleasant = 1.2)
+)
+ANOVA_r <- .5
 
 # data simulation
-ttest_between_data <-
+ANOVA_data <-
   sim_design(
-    between = ttest_between_between,
-    n = ttest_between_n,
-    mu = ttest_between_mu_cond,
-    sd = ttest_between_sd_cond,
+    within = ANOVA_within,
+    between = ANOVA_between,
+    n = ANOVA_n,
+    mu = ANOVA_mu_cond,
+    sd = ANOVA_sd_cond,
+    r = ANOVA_r,
     empirical = FALSE,
     long = TRUE,
     dv = list(value = "value"),
-    id = list(participant = "participant"),
+    id = list(id = "id"),
     plot = FALSE,
     rep = 1
-  ) %>% 
+  ) %>%
   as_tibble()
 
 # show first 10 rows
-ttest_between_data %>%
+ANOVA_data %>%
   head(n = 10) %>%
   kable() %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 # save as .csv
 write_csv(
-  ttest_between_data,
-  here("data/ttest_between_data.csv")
+  ANOVA_data,
+  here("data/ANOVA_data.csv")
 )
 
 ```
+
+## Statistical Analysis
+
+```{r ANOVA-test}
+
+ANOVA_results <-
+  anova_test(
+    data = ANOVA_data,
+    dv = value,
+    wid = id,
+    between = "treatment",
+    within = "condition",
+    type = 2,
+    effect.size = "ges",
+    detailed = FALSE
+  ) %>% 
+  get_anova_table() %>%
+  adjust_pvalue(method = "holm")
+
+ANOVA_results
+
+# treatment, main effect
+ANOVA_main_treatment <- 
+  ANOVA_data %>%
+  group_by(condition) %>%
+  anova_test(
+    dv = value, 
+    wid = id, 
+    between = treatment
+    ) %>%
+  get_anova_table() %>%
+  adjust_pvalue(method = "holm")
+
+ANOVA_main_treatment
+
+# treatment, pairwise comparisons
+ANOVA_pairwise_treatment <-
+  ANOVA_data %>%
+  group_by(condition) %>%
+  t_test(
+    formula = value ~ treatment, 
+    p.adjust.method = "holm",
+    paired = FALSE,
+    var.equal = FALSE,
+    alternative = "two.sided",
+    mu = 0,
+    conf.level = 0.95
+  )
+
+ANOVA_pairwise_treatment
+
+# condition, main effect
+ANOVA_main_condition <- 
+  ANOVA_data %>%
+  group_by(treatment) %>%
+  anova_test(
+    dv = value, 
+    wid = id, 
+    within = condition
+    ) %>%
+  get_anova_table() %>%
+  adjust_pvalue(method = "holm")
+
+ANOVA_main_condition
+
+# condition, pairwise comparisons
+ANOVA_pairwise_condition <-
+  ANOVA_data %>%
+  group_by(treatment) %>%
+  t_test(
+    formula = value ~ condition, 
+    p.adjust.method = "holm",
+    paired = TRUE,
+    var.equal = FALSE,
+    alternative = "two.sided",
+    mu = 0,
+    conf.level = 0.95
+  )
+
+ANOVA_pairwise_condition
+
+```
+
+## Graph
+
+```{r ANOVA-plot}
+
+ANOVA_plot <-
+  ggviolin(
+    ANOVA_data,
+    x = "treatment",
+    y = "value",
+    color = "condition",
+    size = 1,
+    fill = "condition",
+    palette = c("#00AFBB", "#E7B800", "#FC4E07"),
+    alpha = .5,
+    linetype = "solid",
+    trim = TRUE,
+    width = 1,
+    add = c("boxplot", "jitter"),
+    add.params = list(
+      fill = "white"
+    ),
+    title = "Mixed ANOVA",
+    xlab = "Treatment",
+    ylab = "Value",
+    label.rectangle = TRUE,
+    facet.by = "condition",
+    ggtheme = theme_custom
+  ) + 
+  stat_compare_means(
+    method = "t.test",
+    label.y = c(6, 6, 6)
+    )
+
+ANOVA_plot
+
+ggsave(
+  filename = "ANOVA_plot.png",
+  plot = ANOVA_plot,
+  device = "png",
+  path = here("figures"),
+  width = 8,
+  height = 8,
+  units = "in",
+  dpi = 300
+)
+
+```
+
+
+
 
 
 

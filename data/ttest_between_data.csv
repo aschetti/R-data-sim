@@ -1,4 +1,4 @@
-participant,treatment,value
+id,treatment,value
 S001,control,0.76982251051672
 S002,control,2.558708314149124
 S003,control,1.070508391424576
