@@ -19,12 +19,11 @@ seed_smorfia <- 17 # 'A disgrazia!
 set.seed(seed_smorfia) # seed for random number generation
 
 # ### install packages
-# install.packages("devtools")
 # install.packages("here")
 # install.packages("knitr")
 # install.packages("kableExtra")
 # install.packages("tidyverse")
-# devtools::install_github("debruine/faux")
+# install.packages("faux")
 # install.packages("rstatix")
 # install.packages("ggpubr")
 # install.packages("viridis")
