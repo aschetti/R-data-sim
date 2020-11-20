@@ -24,7 +24,7 @@ set.seed(seed_smorfia) # seed for random number generation
 # install.packages("knitr")
 # install.packages("kableExtra")
 # install.packages("tidyverse")
-# devtools::install_github("debruine/faux", build_vignettes = TRUE)
+# devtools::install_github("debruine/faux")
 # install.packages("rstatix")
 # install.packages("ggpubr")
 # install.packages("viridis")
@@ -45,20 +45,21 @@ opts_chunk$set(
   echo = TRUE, # show code
   warning = FALSE, # no package warnings
   message = FALSE, # no package messages
-  fig.dim = c(6, 6) # figure width & height
+  fig.dim = c(8, 8) # figure width & height
 )
 
-# # ggplot custom theme
-# theme_custom <- theme_minimal(base_size = 16) +
-#   theme(
-#     strip.text = element_text(
-#       hjust = .5,
-#       size = 20
-#     ),
-#     legend.title = element_blank(),
-#     plot.title = element_text(size = 22, hjust = .5),
-#     legend.box.background = element_rect(color = "transparent") # transparent outer line
-#   )
+# ggplot custom theme
+theme_custom <- 
+  theme_pubr(base_size = 16) +
+  theme(
+    strip.text = element_text(
+      hjust = .5,
+      size = 20
+    ),
+    plot.title = element_text(size = 26, hjust = .5),
+    legend.box.background = element_rect(color = "transparent"),
+    legend.position = "right"
+  )
 
 ```
 
@@ -72,18 +73,18 @@ opts_chunk$set(
 ```{r ttest-onesample-data}
 
 # parameters
-between_ssj <- list(condition = c("test")) # list of between-subject factors
-n_ssj <- 50 # number of samples (here, participants)
-mu_cond <- 1 # variable means
-sd_cond <- 1 # variable standard deviations
+ttest_onesample_between <- list(condition = c("test")) # list of between-subject factors
+ttest_onesample_n <- 50 # number of samples (here, participants)
+ttest_onesample_mu_cond <- 1 # variable means
+ttest_onesample_sd_cond <- 1 # variable standard deviations
 
 # data simulation
 ttest_onesample_data <-
   sim_design(
-    between = between_ssj,
-    n = n_ssj,
-    mu = mu_cond,
-    sd = sd_cond,
+    between = ttest_onesample_between,
+    n = ttest_onesample_n,
+    mu = ttest_onesample_mu_cond,
+    sd = ttest_onesample_sd_cond,
     empirical = FALSE, # data sampled from a population with specified parameters (not exact)
     long = TRUE, # results in long format
     dv = list(value = "value"), # name of dependent variables
@@ -93,22 +94,16 @@ ttest_onesample_data <-
   ) %>% 
   as_tibble()
 
-```
+# show first 10 rows
+ttest_onesample_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
-## Graph
-
-```{r ttest-onesample-graph}
-
-ggviolin(
+# save as .csv
+write_csv(
   ttest_onesample_data,
-  x = "condition",
-  y = "value",
-  fill = viridis(1),
-  add = c("boxplot", "jitter"),
-  add.params = list(
-    color = "white",
-    fill = NULL
-    )
+  here("data/ttest_onesample_data.csv")
 )
 
 ```
@@ -119,16 +114,61 @@ ggviolin(
 
 ttest_onesample_results <-
   t_test(
-    ttest_onesample_data,
-    value ~ 1,
-    p.adjust.method = "holm",
-    paired = FALSE,
-    var.equal = FALSE,
-    alternative = "two.sided",
-    mu = 0,
-    conf.level = 0.95,
+    ttest_onesample_data, # data
+    value ~ 1, # formula
+    p.adjust.method = "holm", # p-value adjustment
+    paired = FALSE, # paired test?
+    var.equal = FALSE, # assume equal variance?
+    alternative = "two.sided", # alternative hypothesis (two-sided, larger than mu, smaller than mu)
+    mu = 0, # null value
+    conf.level = .95, # width confidence intervals
     detailed = FALSE
   )
+
+ttest_onesample_results
+
+```
+
+## Graph
+
+```{r ttest-onesample-plot}
+
+ttest_onesample_plot <-
+  ggviolin(
+    ttest_onesample_data, # data
+    x = "condition", # independent variable
+    y = "value", # dependent variable
+    color = "#00AFBB", # density: line color
+    linetype = "solid", # density: line type
+    size = 1, # density: line width
+    fill = "#00AFBB", # density: fill color
+    alpha = .5, # density: fill color transparency
+    trim = TRUE, # density: trim tails
+    width = 1, # density: width
+    add = c("boxplot", "jitter"),
+    add.params = list(
+      color = "black", # color of boxplot lines and jittered points
+      fill = "white" # fill color of boxplot
+    ),
+    title = "One-sample t-test", # plot title
+    xlab = "Condition", # x-axis title
+    ylab = "Value", # y-axis title
+    label.rectangle = TRUE, # rectangle underneath text
+    ggtheme = theme_custom # ggplot theme
+  )
+
+ttest_onesample_plot
+
+ggsave( # save to file
+  filename = "ttest_onesample_plot.png",
+  plot = ttest_onesample_plot,
+  device = "png",
+  path = here("figures"),
+  width = 8,
+  height = 8,
+  units = "in",
+  dpi = 300
+)
 
 ```
 
@@ -136,14 +176,21 @@ ttest_onesample_results <-
 
 ## Data Simulation
 
-```{r ttest-between}
+```{r ttest-between-data}
 
+# parameters
+ttest_between_between <- list(treatment = c("control", "drug"))
+ttest_between_n <- c(50, 50)
+ttest_between_mu_cond <- c(1, 2)
+ttest_between_sd_cond <- c(1, 1.2)
+
+# data simulation
 ttest_between_data <-
   sim_design(
-    between = list(treatment = c("control", "drug")),
-    n = c(50, 50),
-    mu = c(1, 2),
-    sd = c(1, 1.2),
+    between = ttest_between_between,
+    n = ttest_between_n,
+    mu = ttest_between_mu_cond,
+    sd = ttest_between_sd_cond,
     empirical = FALSE,
     long = TRUE,
     dv = list(value = "value"),
@@ -153,67 +200,112 @@ ttest_between_data <-
   ) %>% 
   as_tibble()
 
+# show first 10 rows
+ttest_between_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+# save as .csv
+write_csv(
+  ttest_between_data,
+  here("data/ttest_between_data.csv")
+)
+
+```
+
+## Statistical Analysis
+
+```{r ttest-between-test}
+
 ttest_between_results <-
-  t.test(
-    x = filter(ttest_between_data, treatment == "control")$value,
-    y = filter(ttest_between_data, treatment == "drug")$value,
-    alternative = "two.sided",
-    mu = 0,
+  t_test(
+    ttest_between_data,
+    value ~ treatment,
+    p.adjust.method = "holm",
     paired = FALSE,
     var.equal = FALSE,
-    conf.level = .95
+    alternative = "two.sided",
+    mu = 0,
+    conf.level = .95,
+    detailed = FALSE
   )
+
+ttest_between_results
 
 ```
 
 ## Graph
 
-```{r ttest-onesample-graph}
+```{r ttest-between-plot}
 
-p <-
-ggviolin(
-  ttest_onesample_data,
-  x = "condition",
-  y = "value",
-  fill = viridis(1),
-  # palette = "#00AFBB",
-  add = c("boxplot", "jitter"),
-  error.plot = "crossbar",
-  add.params = list(
-    color = "white",
-    fill = NULL
-    )
+ttest_between_plot <-
+  ggviolin(
+    ttest_between_data,
+    x = "treatment",
+    y = "value",
+    color = "treatment",
+    size = 1,
+    fill = "treatment",
+    palette = c("#00AFBB", "#E7B800"), # density: color palette by groups
+    alpha = .5,
+    linetype = "solid",
+    trim = TRUE,
+    width = 1,
+    add = c("boxplot", "jitter"),
+    add.params = list(
+      color = "black",
+      fill = "white"
+    ),
+    title = "Between-subject t-test",
+    xlab = "Treatment",
+    ylab = "Value",
+    label.rectangle = TRUE,
+    ggtheme = theme_custom
+  ) +
+  stat_compare_means(
+    method = "t.test",
+    paired = FALSE,
+    method.args = list(alternative = "two.sided"),
+    hide.ns = FALSE
+  )
+
+ttest_between_plot
+
+ggsave(
+  filename = "ttest_between_plot.png",
+  plot = ttest_between_plot,
+  device = "png",
+  path = here("figures"),
+  width = 8,
+  height = 8,
+  units = "in",
+  dpi = 300
 )
 
-
-
-
-my_comparisons <- list(c("condition", 0))
-
-p + stat_compare_means(comparisons = my_comparisons)+ # Add pairwise comparisons p-value
-  stat_compare_means(label.y = 50)                   # Add global p-value
-
-  stat_compare_means(comparisons = my_comparisons, label = "p.signif")+ # Add significance levels
-  stat_compare_means(label.y = 50)                                      # Add global the p-value 
-
 ```
-
-
-## Statistical Analysis
 
 # Within-subject t-test
 
 ## Data Simulation
 
-```{r ttest-within}
+```{r ttest-within-data}
 
+# parameters
+ttest_within_within <- list(condition = c("neutral", "emotion"))
+ttest_within_n <- c(50, 50)
+ttest_within_mu_cond <- c(1, 2)
+ttest_within_sd_cond <- c(1, 1.2)
+ttest_within_r <- .7 # correlations among variables
+
+# data simulation
 ttest_within_data <-
   sim_design(
     within = list(condition = c("neutral", "emotion")),
-    n = c(50, 50),
-    mu = c(1, 2),
-    sd = c(1, 1.2),
-    r = .7,
+    n = ttest_within_n,
+    mu = ttest_within_mu_cond,
+    sd = ttest_within_sd_cond,
+    r = ttest_within_r,
     empirical = FALSE,
     long = TRUE,
     dv = list(value = "value"),
@@ -223,39 +315,132 @@ ttest_within_data <-
   ) %>% 
   as_tibble()
 
+# show first 10 rows
+ttest_within_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
-
-pairwise_t_test(
-  data,
-  formula,
-  comparisons = NULL,
-  ref.group = NULL,
-  p.adjust.method = "holm",
-  paired = FALSE,
-  pool.sd = !paired,
-  detailed = FALSE,
-  ...
+# save as .csv
+write_csv(
+  ttest_within_data,
+  here("data/ttest_within_data.csv")
 )
 
+```
+
+## Statistical Analysis
+
+```{r ttest-within-test}
+
 ttest_within_results <-
-  t.test(
-    x = filter(ttest_within_data, condition == "neutral")$value,
-    y = filter(ttest_within_data, condition == "emotion")$value,
-    alternative = "two.sided",
-    mu = 0,
+  t_test(
+    ttest_within_data,
+    value ~ condition,
+    p.adjust.method = "holm",
     paired = TRUE,
     var.equal = FALSE,
-    conf.level = .95
+    alternative = "two.sided",
+    mu = 0,
+    conf.level = .95,
+    detailed = FALSE
   )
+
+ttest_within_results
 
 ```
 
 ## Graph
 
-## Statistical Analysis
+```{r ttest-within-plot}
+
+ttest_within_plot <-
+  ggviolin(
+    ttest_within_data,
+    x = "condition",
+    y = "value",
+    color = "condition",
+    size = 1,
+    fill = "condition",
+    palette = c("#00AFBB", "#E7B800"),
+    alpha = .5,
+    linetype = "solid",
+    trim = TRUE,
+    width = 1,
+    add = c("boxplot", "jitter"),
+    add.params = list(
+      color = "black",
+      fill = "white"
+    ),
+    title = "Within-subject t-test",
+    xlab = "Condition",
+    ylab = "Value",
+    label.rectangle = TRUE,
+    ggtheme = theme_custom
+  ) +
+  stat_compare_means(
+    method = "t.test",
+    paired = TRUE,
+    method.args = list(alternative = "two.sided"),
+    hide.ns = FALSE
+  )
+
+ttest_within_plot
+
+ggsave(
+  filename = "ttest_within_plot.png",
+  plot = ttest_within_plot,
+  device = "png",
+  path = here("figures"),
+  width = 8,
+  height = 8,
+  units = "in",
+  dpi = 300
+)
+
+```
 
 # 2 x 2 factorial ANOVA
 
+## Data Simulation
+
+```{r ANOVA-between-data}
+
+# parameters
+ttest_between_between <- list(treatment = c("control", "drug"))
+ttest_between_n <- c(50, 50)
+ttest_between_mu_cond <- c(1, 2)
+ttest_between_sd_cond <- c(1, 1.2)
+
+# data simulation
+ttest_between_data <-
+  sim_design(
+    between = ttest_between_between,
+    n = ttest_between_n,
+    mu = ttest_between_mu_cond,
+    sd = ttest_between_sd_cond,
+    empirical = FALSE,
+    long = TRUE,
+    dv = list(value = "value"),
+    id = list(participant = "participant"),
+    plot = FALSE,
+    rep = 1
+  ) %>% 
+  as_tibble()
+
+# show first 10 rows
+ttest_between_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+# save as .csv
+write_csv(
+  ttest_between_data,
+  here("data/ttest_between_data.csv")
+)
+
+```
 
 
 
@@ -275,6 +460,11 @@ ttest_within_results <-
 
 
 
+
+
+
+
+# OLD CODE
 
 ```{r sim-data-params}
 
