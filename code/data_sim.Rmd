@@ -588,6 +588,118 @@ ggsave(
 
 ```
 
+# Multilevel Models
+
+## Data Simulation
+
+From https://debruine.github.io/lmem_sim/articles/appendix1a_example_code.html
+
+```{r MLM-params}
+
+# parameters
+MLM_n_ssj <- 50 # number of participants
+# condition labels
+MLM_cat_cond1 <- "ingroup"
+MLM_cat_cond2 <- "outgroup"
+# number of items for each condition
+MLM_n_trials_cond1 <- 25
+MLM_n_trials_cond2 <- 25
+MLM_mu_grand <- 800 # grand mean [beta_0]
+MLM_cond_beta <- 50 # effect of condition [beta_1]
+MLM_item_sd <- 80 # by-item random intercept sd [omega_0]
+MLM_ssj_sd <- 100 # by-subject random intercept sd [tau_0]
+MLM_ssjslope_sd <- 40 # by-subject random slope sd [tau_1]
+MLM_cor_int_slope <- .2 # correlation between intercept and slope [rho]
+MLM_error_sd <- 200 # residual (standard deviation) [sigma]
+
+```
+
+
+```{r MLM-data-fun}
+
+# custom data simulation function
+MLM_data_fun <- function(
+  n_subj = MLM_n_ssj, # number of subjects
+  label_cond1 = MLM_cat_cond1, # label condition 1
+  label_cond2 = MLM_cat_cond2, # label condition 2
+  n_cond1 =  MLM_n_trials_cond1, # number of stimuli condition 1
+  n_cond2 =  MLM_n_trials_cond2, # number of stimuli condition 2
+  beta_0 = MLM_mu_grand, # grand mean
+  beta_1 =  MLM_cond_beta, # effect of category
+  omega_0 =  MLM_item_sd, # by-item random intercept sd
+  tau_0 = MLM_ssj_sd, # by-subject random intercept sd
+  tau_1 =  MLM_ssjslope_sd, # by-subject random slope sd
+  rho = MLM_cor_int_slope, # correlation between intercept and slope
+  sigma = MLM_error_sd) { # residual (standard deviation)
+
+   # simulate a sample of items
+  items <- data.frame(
+    item_id = seq_len(n_cond1 + n_cond2),
+    condition = rep(c(label_cond1, label_cond2), c(n_cond1, n_cond2)),
+    X_i = rep(c(-0.5, 0.5), c(n_cond1, n_cond2)),
+    O_0i = rnorm(n = n_cond1 + n_cond2, mean = 0, sd = omega_0)
+  )
+
+  # simulate a sample of subjects
+  subjects <- faux::rnorm_multi(
+    n = n_subj, mu = 0, sd = c(tau_0, tau_1), r = rho,
+    varnames = c("T_0s", "T_1s")
+  )
+  subjects$subj_id <- 1:n_subj
+
+  # cross subject and item IDs 
+  crossing(subjects, items)  %>%
+    mutate(
+      e_si = rnorm(nrow(.), mean = 0, sd = sigma),
+      value = beta_0 + T_0s + O_0i + (beta_1 + T_1s) * X_i + e_si
+    ) %>%
+    select(subj_id, item_id, condition, value) %>% 
+    arrange(subj_id)
+  
+}
+
+```
+
+```{r MLM-data}
+
+MLM_data <- MLM_data_fun()
+
+# show first 10 rows
+MLM_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+# save as .csv
+write_csv(
+  MLM_data,
+  here("data/MLM_data.csv")
+)
+
+```
+
+## Statistical Analysis
+
+```{r MLM-test}
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
 
 
 
