@@ -1,5 +1,5 @@
 ---
-title: "Synthesizing data in R: An Example"
+title: "Simulate data in R with package `faux`"
 author: '[Antonio Schettino](https://osf.io/zbv65/ "Antonio Schettino")'
 date: '`r Sys.Date()`'
 output:
@@ -25,6 +25,7 @@ set.seed(seed_smorfia) # seed for random number generation
 # install.packages("tidyverse")
 # install.packages("faux")
 # install.packages("rstatix")
+# install.packages("lme4")
 # install.packages("ggpubr")
 
 ### load packages
@@ -34,6 +35,8 @@ library(kableExtra)
 library(tidyverse)
 library(faux)
 library(rstatix)
+library(lme4)
+library(broom.mixed)
 library(ggpubr)
 
 # for RMarkdown
@@ -46,7 +49,7 @@ opts_chunk$set(
 )
 
 # ggplot custom theme
-theme_custom <- 
+theme_custom <-
   theme_pubr(base_size = 16) +
   theme(
     strip.text = element_text(
@@ -57,7 +60,6 @@ theme_custom <-
     legend.box.background = element_rect(color = "transparent"),
     legend.position = "right"
   )
-
 ```
 
 ***
@@ -85,23 +87,23 @@ ttest_onesample_data <-
     empirical = FALSE, # exact mean/SD?
     long = TRUE, # results in long format
     dv = list(value = "value"), # name of dependent variables
-    id = list(id = "id"),  # name of ID column
+    id = list(id = "id"), # name of ID column
     plot = FALSE, # plot?
     rep = 1 # number of simulated datasets
-  ) %>% 
+  ) %>%
   as_tibble()
-
-# show first 10 rows
-ttest_onesample_data %>%
-  head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 # save as .csv
 write_csv(
   ttest_onesample_data,
   here("data/ttest_onesample_data.csv")
 )
+
+# show first 10 rows
+ttest_onesample_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
@@ -154,8 +156,6 @@ ttest_onesample_plot <-
     ggtheme = theme_custom # ggplot theme
   )
 
-ttest_onesample_plot
-
 ggsave( # save to file
   filename = "ttest_onesample_plot.png",
   plot = ttest_onesample_plot,
@@ -166,6 +166,8 @@ ggsave( # save to file
   units = "in",
   dpi = 300
 )
+
+ttest_onesample_plot
 
 ```
 
@@ -194,20 +196,20 @@ ttest_between_data <-
     id = list(id = "id"),
     plot = FALSE,
     rep = 1
-  ) %>% 
+  ) %>%
   as_tibble()
-
-# show first 10 rows
-ttest_between_data %>%
-  head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 # save as .csv
 write_csv(
   ttest_between_data,
   here("data/ttest_between_data.csv")
 )
+
+# show first 10 rows
+ttest_between_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
@@ -267,8 +269,6 @@ ttest_between_plot <-
     hide.ns = FALSE # hide non-significant comparisons?
   )
 
-ttest_between_plot
-
 ggsave(
   filename = "ttest_between_plot.png",
   plot = ttest_between_plot,
@@ -279,6 +279,8 @@ ggsave(
   units = "in",
   dpi = 300
 )
+
+ttest_between_plot
 
 ```
 
@@ -309,20 +311,20 @@ ttest_within_data <-
     id = list(id = "id"),
     plot = FALSE,
     rep = 1
-  ) %>% 
+  ) %>%
   as_tibble()
-
-# show first 10 rows
-ttest_within_data %>%
-  head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 # save as .csv
 write_csv(
   ttest_within_data,
   here("data/ttest_within_data.csv")
 )
+
+# show first 10 rows
+ttest_within_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
@@ -382,8 +384,6 @@ ttest_within_plot <-
     hide.ns = FALSE
   )
 
-ttest_within_plot
-
 ggsave(
   filename = "ttest_within_plot.png",
   plot = ttest_within_plot,
@@ -394,6 +394,8 @@ ggsave(
   units = "in",
   dpi = 300
 )
+
+ttest_within_plot
 
 ```
 
@@ -420,11 +422,15 @@ ANOVA_sd_cond <- list(
 )
 
 ANOVA_r <- list( # if the design has more than 2 within-subject conditions, specify each correlation in the upper right triangle of the correlation matrix as a vector (https://debruine.github.io/faux/articles/sim_design.html#correlations-1)
-  control = c(.40, .50,
-                   .60),
-  drug = c(.15, .25,
-                .45)
+  control = c(
+    .40, .50,
+    .60
+  ),
+  drug = c(
+    .15, .25,
+    .45
   )
+)
 
 # data simulation
 ANOVA_data <-
@@ -444,17 +450,17 @@ ANOVA_data <-
   ) %>%
   as_tibble()
 
-# show first 10 rows
-ANOVA_data %>%
-  head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
 # save as .csv
 write_csv(
   ANOVA_data,
   here("data/ANOVA_data.csv")
 )
+
+# show first 10 rows
+ANOVA_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
@@ -472,21 +478,21 @@ ANOVA_results <-
     type = 2,
     effect.size = "ges",
     detailed = FALSE
-  ) %>% 
+  ) %>%
   get_anova_table() %>%
   adjust_pvalue(method = "holm")
 
 ANOVA_results
 
 # treatment, main effect
-ANOVA_main_treatment <- 
+ANOVA_main_treatment <-
   ANOVA_data %>%
   group_by(condition) %>%
   anova_test(
-    dv = value, 
-    wid = id, 
+    dv = value,
+    wid = id,
     between = treatment
-    ) %>%
+  ) %>%
   get_anova_table() %>%
   adjust_pvalue(method = "holm")
 
@@ -497,7 +503,7 @@ ANOVA_pairwise_treatment <-
   ANOVA_data %>%
   group_by(condition) %>%
   t_test(
-    formula = value ~ treatment, 
+    formula = value ~ treatment,
     p.adjust.method = "holm",
     paired = FALSE,
     var.equal = FALSE,
@@ -509,14 +515,14 @@ ANOVA_pairwise_treatment <-
 ANOVA_pairwise_treatment
 
 # condition, main effect
-ANOVA_main_condition <- 
+ANOVA_main_condition <-
   ANOVA_data %>%
   group_by(treatment) %>%
   anova_test(
-    dv = value, 
-    wid = id, 
+    dv = value,
+    wid = id,
     within = condition
-    ) %>%
+  ) %>%
   get_anova_table() %>%
   adjust_pvalue(method = "holm")
 
@@ -527,7 +533,7 @@ ANOVA_pairwise_condition <-
   ANOVA_data %>%
   group_by(treatment) %>%
   t_test(
-    formula = value ~ condition, 
+    formula = value ~ condition,
     p.adjust.method = "holm",
     paired = TRUE,
     var.equal = FALSE,
@@ -567,13 +573,11 @@ ANOVA_plot <-
     label.rectangle = TRUE,
     facet.by = "condition",
     ggtheme = theme_custom
-  ) + 
+  ) +
   stat_compare_means(
     method = "t.test",
     label.y = c(6, 6, 6)
-    )
-
-ANOVA_plot
+  )
 
 ggsave(
   filename = "ANOVA_plot.png",
@@ -586,9 +590,11 @@ ggsave(
   dpi = 300
 )
 
+ANOVA_plot
+
 ```
 
-# Multilevel Models
+# Multilevel Model
 
 ## Data Simulation
 
@@ -619,20 +625,20 @@ MLM_error_sd <- 200 # residual (standard deviation) [sigma]
 
 # custom data simulation function
 MLM_data_fun <- function(
-  n_subj = MLM_n_ssj, # number of subjects
-  label_cond1 = MLM_cat_cond1, # label condition 1
-  label_cond2 = MLM_cat_cond2, # label condition 2
-  n_cond1 =  MLM_n_trials_cond1, # number of stimuli condition 1
-  n_cond2 =  MLM_n_trials_cond2, # number of stimuli condition 2
-  beta_0 = MLM_mu_grand, # grand mean
-  beta_1 =  MLM_cond_beta, # effect of category
-  omega_0 =  MLM_item_sd, # by-item random intercept sd
-  tau_0 = MLM_ssj_sd, # by-subject random intercept sd
-  tau_1 =  MLM_ssjslope_sd, # by-subject random slope sd
-  rho = MLM_cor_int_slope, # correlation between intercept and slope
-  sigma = MLM_error_sd) { # residual (standard deviation)
+                         n_subj = MLM_n_ssj, # number of subjects
+                         label_cond1 = MLM_cat_cond1, # label condition 1
+                         label_cond2 = MLM_cat_cond2, # label condition 2
+                         n_cond1 = MLM_n_trials_cond1, # number of stimuli condition 1
+                         n_cond2 = MLM_n_trials_cond2, # number of stimuli condition 2
+                         beta_0 = MLM_mu_grand, # grand mean
+                         beta_1 = MLM_cond_beta, # effect of category
+                         omega_0 = MLM_item_sd, # by-item random intercept sd
+                         tau_0 = MLM_ssj_sd, # by-subject random intercept sd
+                         tau_1 = MLM_ssjslope_sd, # by-subject random slope sd
+                         rho = MLM_cor_int_slope, # correlation between intercept and slope
+                         sigma = MLM_error_sd) { # residual (standard deviation)
 
-   # simulate a sample of items
+  # simulate a sample of items
   items <- data.frame(
     item_id = seq_len(n_cond1 + n_cond2),
     condition = rep(c(label_cond1, label_cond2), c(n_cond1, n_cond2)),
@@ -647,15 +653,14 @@ MLM_data_fun <- function(
   )
   subjects$subj_id <- 1:n_subj
 
-  # cross subject and item IDs 
-  crossing(subjects, items)  %>%
+  # cross subject and item IDs
+  crossing(subjects, items) %>%
     mutate(
       e_si = rnorm(nrow(.), mean = 0, sd = sigma),
       value = beta_0 + T_0s + O_0i + (beta_1 + T_1s) * X_i + e_si
     ) %>%
-    select(subj_id, item_id, condition, value) %>% 
+    select(subj_id, item_id, condition, X_i, value) %>%
     arrange(subj_id)
-  
 }
 
 ```
@@ -664,17 +669,17 @@ MLM_data_fun <- function(
 
 MLM_data <- MLM_data_fun()
 
-# show first 10 rows
-MLM_data %>%
-  head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
 # save as .csv
 write_csv(
   MLM_data,
   here("data/MLM_data.csv")
 )
+
+# show first 10 rows
+MLM_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
@@ -682,1659 +687,90 @@ write_csv(
 
 ```{r MLM-test}
 
-
-
-
-
-
-
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# OLD CODE
-
-```{r sim-data-params}
-
-subj <- 50 # number of subjects
-n_trials <- c(ingroup = 25, outgroup = 25) # number of items for each condition
-grand_mean <- 800 # grand mean
-cond_beta <- 50 # effect of condition
-item_sd <- 80 # by-item random intercept sd
-subj_sd <- 100 # by-subject random intercept sd
-subjslope_sd <- 40 # by-subject random slope sd
-cor_int_slope <- .2 # correlation between intercept and slope
-error_sd <- 200 # residual (standard deviation)
-
-```
-
-```{r sim-data-fun}
-
-# custom data simulation function
-sim_data_fun <- function(nsubj = subj,
-                         nitem = n_trials,
-                         b0 = grand_mean,
-                         b1 = cond_beta,
-                         I0i_sd = item_sd,
-                         S0s_sd = subj_sd,
-                         S1s_sd = subjslope_sd,
-                         scor = cor_int_slope,
-                         err_sd = error_sd) {
-
-  # simulate items
-  items <-
-    faux::sim_design(
-      between = list(category = c("ingroup", "outgroup")),
-      n = nitem,
-      sd = I0i_sd,
-      dv = "I0i",
-      id = "item_id",
-      plot = FALSE
-    )
-
-  # effect code category
-  items$cat <-
-    recode(items$category, "ingroup" = -0.5, "outgroup" = 0.5)
-
-  # simulate subjects
-  subjects <-
-    faux::sim_design(
-      within = list(
-        effect = c(S0s = "By-subject random intercepts", S1s = "By-subject random slopes")
-      ),
-      n = nsubj,
-      sd = c(S0s_sd, S1s_sd),
-      r = scor,
-      id = "subj_id",
-      plot = FALSE
-    )
-
-  # simulate trials
-  dat_sim <-
-    crossing(subj_id = subjects$subj_id, item_id = items$item_id) %>%
-    inner_join(subjects, "subj_id") %>%
-    inner_join(items, "item_id") %>%
-    mutate(err = rnorm(nrow(.), mean = 0, sd = err_sd)) %>%
-    mutate(RT = b0 + I0i + S0s + (b1 + S1s) * cat + err) %>%
-    dplyr::select(participant = subj_id, item = item_id, condition = category, RT) %>%
-    mutate(
-      participant = as_factor(participant),
-      item = as_factor(item)
-    )
-  
-}
-
-```
-
-Simulate the dataset
-
-```{r sim-data}
-
-data_sim <- sim_data_fun()
-
-```
-
-```{r sim-data-save, echo = FALSE}
-
-# show first 10 rows
-data_sim %>%
-  head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
-# save as .csv
-write_csv(
-  data_sim,
-  here("data/sim/data_sim.csv")
+# fit a linear mixed-effects model to data
+MLM_results <- lmer(value ~ 1 + X_i + (1 | item_id) + (1 + X_i | subj_id),
+  data = MLM_data
 )
 
-```
-
-Plot the dataset
-
-```{r sim-data-plot, echo = FALSE}
-
-# all trials
-data_sim_plot_trials <-
-  data_sim %>%
-  ggplot(aes(
-    x = condition,
-    y = RT,
-    color = condition,
-    fill = condition
-  )) +
-  geom_pirate(
-    bars = FALSE,
-    cis = TRUE,
-    lines = TRUE, lines_params = list(color = "black", alpha = .3),
-    points = TRUE, points_params = list(color = "black", shape = 21, size = 5, alpha = .1),
-    violins = TRUE, violins_params = list(size = 1),
-    show.legend = TRUE
-  ) +
-  scale_y_continuous(breaks = seq(0, 2000, 200)) +
-  scale_color_viridis_d(option = "cividis") +
-  scale_fill_viridis_d(option = "cividis") +
-  labs(
-    title = "all trials",
-    y = "ms"
-  ) +
-  theme_custom +
-  theme(legend.position = "none")
-
-# trial-averaged
-data_sim_plot_ssj <-
-  data_sim %>%
-  group_by(participant, condition) %>%
-  summarize(
-    RT = mean(RT)
-  ) %>%
-  ungroup() %>%
-  ggplot(aes(
-    x = condition,
-    y = RT,
-    color = condition,
-    fill = condition
-  )) +
-  geom_pirate(
-    bars = FALSE,
-    cis = TRUE,
-    lines = TRUE, lines_params = list(color = "black", alpha = .3),
-    points = TRUE, points_params = list(color = "black", shape = 21, size = 5, alpha = .4),
-    violins = TRUE, violins_params = list(size = 1),
-    show.legend = TRUE
-  ) +
-  scale_y_continuous(breaks = seq(0, 2000, 100)) +
-  scale_color_viridis_d(option = "cividis") +
-  scale_fill_viridis_d(option = "cividis") +
-  labs(
-    title = "trial-averaged",
-    y = "ms"
-  ) +
-  theme_custom +
-  theme(legend.position = "none")
-
-# combine plots
-data_sim_plot_trials + data_sim_plot_ssj +
-   plot_annotation(title = "Simulated Reaction Times", 
-                   tag_levels = "A",
-                   theme = theme(plot.title = element_text(size = 26, hjust = .5))
-                   )
+tibble(
+  variable = c(
+    "beta_0",
+    "beta_1",
+    "tau_0",
+    "rho",
+    "tau_1",
+    "omega_0",
+    "sigma"
+  ),
+  explanation = c(
+    "intercept (grand mean)",
+    "fixed effect of category",
+    "by-item random intercept SD",
+    "by-subject random intercept SD",
+    "correlation between intercept and slope",
+    "by-subject random slope SD",
+    "residual (error) SD"
+  ),
+  `simulated value` = c(
+    MLM_mu_grand,
+    MLM_cond_beta,
+    MLM_item_sd,
+    MLM_ssj_sd,
+    MLM_cor_int_slope,
+    MLM_ssjslope_sd,
+    MLM_error_sd
+  ),
+  `estimated by model` = broom.mixed::tidy(MLM_results)$estimate
+) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
-## Statistical Analysis
+## Graph
 
-```{r brms-setup}
+```{r MLM-plot}
 
-# MCMC parameters
-num_cores <- 4 # number of cores in processor of computer used for analysis (parallel::detectCores())
-num_chains <- num_cores # number of chains = number of cores in processor of computer used for analysis
-num_iter <- 3000 # number of samples per chain
-num_warmup <- 1000 # number of warm-up samples per chain
-num_thin <- 1 # thinning: extract one out of x samples per chain
+MLM_plot <-
+  ggviolin(
+    MLM_data,
+    x = "condition",
+    y = "value",
+    color = "condition",
+    size = 1,
+    fill = "condition",
+    palette = c("#00AFBB", "#E7B800"),
+    alpha = .5,
+    linetype = "solid",
+    trim = TRUE,
+    width = 1,
+    add = c("boxplot", "jitter"),
+    add.params = list(
+      color = "black",
+      fill = "white",
+      alpha = .2
+    ),
+    title = "Multilevel Model",
+    xlab = "Condition",
+    ylab = "Value",
+    label.rectangle = TRUE,
+    ggtheme = theme_custom
+  )
 
-# weakly informative priors 
-brms_priors <- c(
-  set_prior("normal(800, 400)", class = "Intercept"), # on intercept
-  set_prior("normal(0, 400)", class = "b", lb = 0, ub = 2000) # on beta coefficients
+ggsave(
+  filename = "MLM_plot.png",
+  plot = MLM_plot,
+  device = "png",
+  path = here("figures"),
+  width = 8,
+  height = 8,
+  units = "in",
+  dpi = 300
 )
 
-```
-
-```{r brms-data-sim, include = FALSE, eval = FALSE}
-
-brms_data_sim_t0 <- Sys.time()
-
-brms_data_sim <-
-  brm(RT ~ condition + (1 | item) + (condition | participant), # formula
-    data = data_sim, # data
-    family = gaussian(), # likelihood function
-    prior = brms_priors, # priors
-    sample_prior = TRUE, # draw samples from priors
-    save_all_pars = TRUE, # save samples from all variables
-    inits = "random", # initial parameter values in the chains
-    control = list( # parameters of NUTS sampler
-      adapt_delta = .99,
-      max_treedepth = 15
-    ),
-    chains = num_chains, # number of chains
-    iter = num_iter, # number of iterations
-    warmup = num_warmup, # number of warm-up samples
-    thin = num_thin, # thinning rate
-    algorithm = "sampling", # type of sampling algorithm
-    cores = num_chains, # number of processor cores to use when running chains in parallel
-    seed = seed_smorfia, # RNG seed
-    file = here("results/sim/brms_data_sim.rds") # save results
-  )
-
-brms_data_sim_t1 <- Sys.time()
-
-brms_data_sim_elapsed <- brms_data_sim_t1 - brms_data_sim_t0 # elapsed time
-saveRDS(brms_data_sim_elapsed, here("results/sim/brms_data_sim_elapsed.rds")) # save as .rds
-
-```
-
-```{r brms-data-sim-show, eval = FALSE}
-
-brms_data_sim <-
-  brm(RT ~ condition + (1 | item) + (condition | participant), # formula
-    data = data_sim, # data
-    family = gaussian(), # likelihood function
-    prior = brms_priors, # priors
-    sample_prior = TRUE, # draw samples from priors
-    save_all_pars = TRUE, # save samples from all variables
-    inits = "random", # initial parameter values in the chains
-    control = list( # parameters of NUTS sampler
-      adapt_delta = .99,
-      max_treedepth = 15
-    ),
-    chains = num_chains, # number of chains
-    iter = num_iter, # number of iterations
-    warmup = num_warmup, # number of warm-up samples
-    thin = num_thin, # thinning rate
-    algorithm = "sampling", # type of sampling algorithm
-    cores = num_chains, # number of processor cores to use when running chains in parallel
-    seed = seed_smorfia, # RNG seed
-    file = here("results/sim/brms_data_sim.rds") # save results
-  )
-
-```
-
-We know the data come from normal distributions because we have simulated them that way. However, RTs typically follow other distributions, e.g., skewed normal or ex-Gaussian. In `brms` you can use those likelihood functions by simply changing the `family` argument accordingly. 
-
-### Model Diagnostics
-
-```{r brms-data-sim-load, include = FALSE}
-
-brms_data_sim <-
-  readRDS(here("results/sim/brms_data_sim.rds"))
-
-```
-
-```{r brms-data-sim-diagnostics, echo = FALSE}
-
-## chain convergence
-# trace plots of MCMC draws
-brms_data_sim_MCMC <-
-  brms_data_sim %>%
-  posterior_samples(pars = "b_", add_chain = TRUE) %>%
-  dplyr::select(
-    "chain",
-    "intercept" = "b_Intercept",
-    "condition_outgroup" = "b_conditionoutgroup",
-  ) %>%
-  mcmc_trace(
-    facet_args = list(nrow = 3),
-    np = nuts_params(brms_data_sim)
-  ) +
-  ggtitle("Chain Convergence") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# rank histograms
-brms_data_sim_rank <-
-  brms_data_sim %>%
-  posterior_samples(pars = "b_", add_chain = TRUE) %>%
-  dplyr::select(
-    "chain",
-    "intercept" = "b_Intercept",
-    "condition_outgroup" = "b_conditionoutgroup",
-  ) %>%
-  as_tibble() %>%
-  mcmc_rank_overlay(
-    n_bins = 20,
-    ref_line = TRUE
-  ) +
-  ggtitle("Rank Histograms") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# posterior predictive checks
-brms_data_sim_PPC <-
-  brms_data_sim %>%
-  posterior_predict(nsamples = 1000) %>%
-  ppc_stat_grouped(
-    y = pull(data_sim, RT),
-    group = pull(data_sim, condition),
-    stat = "mean"
-  ) +
-  ggtitle("Posterior Predictive Checks") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# combine plots
-brms_data_sim_diagnostics_plots <- 
-  (brms_data_sim_MCMC + brms_data_sim_rank) / brms_data_sim_PPC
-brms_data_sim_diagnostics_plots[[1]] <- 
-  brms_data_sim_diagnostics_plots[[1]] + plot_layout(tag_level = "new")
-brms_data_sim_diagnostics_plots +
-  plot_annotation(
-    tag_levels = c("A", "1"),
-    title = "Model Diagnostics",
-    theme = theme(plot.title = element_text(size = 26, hjust = .5))
-  )
-
-```
-
-### Parameter Recovery
-
-```{r brms-data-sim-results}
-
-brms_data_sim
-
-```
-
-```{r brms-data-sim-param-recovery}
-
-# extract samples from posterior distributions
-brms_data_sim_posteriors <-
-  brms_data_sim %>%
-  posterior_samples(add_chain = TRUE) %>%
-  dplyr::select(
-    "sample" = iter,
-    "grand_mean" = b_Intercept,
-    "cond_beta" = b_conditionoutgroup,
-    "item_sd" = sd_item__Intercept,
-    "subj_sd" = sd_participant__Intercept,
-    "subjslope_sd" = sd_participant__conditionoutgroup,
-    "cor_int_slope" = cor_participant__Intercept__conditionoutgroup,
-    "error_sd" = sigma
-  ) %>%
-  as_tibble() %>%
-  pivot_longer(grand_mean:error_sd, names_to = "parameter", values_to = "value")
-
-# comparison simulation vs. recovered parameters
-brms_data_sim_posteriors %>%
-  group_by(parameter) %>%
-  summarize(mean_value = mean(value)) %>%
-  ungroup() %>%
-  mutate(parameter = factor(parameter,
-    levels = c(
-      "grand_mean", "cond_beta", "item_sd", "subj_sd",
-      "subjslope_sd", "cor_int_slope", "error_sd"
-    )
-  )) %>%
-  arrange(parameter) %>%
-  add_column(simulation = c(
-    grand_mean, cond_beta, item_sd, subj_sd,
-    subjslope_sd, cor_int_slope, error_sd
-  )) %>%
-  dplyr::rename(recovered = mean_value) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
-```
-
-```{r, brms-data-sim-plot-posteriors, echo = FALSE}
-
-# plot posterior distributions
-brms_data_sim_posteriors_plot_ms <-
-  brms_data_sim_posteriors %>%
-  dplyr::filter(parameter %in% c("cond_beta", "item_sd", "subj_sd", "subjslope_sd", "error_sd")) %>%
-  ggplot(aes(y = parameter, x = value)) +
-  stat_halfeyeh(.width = .95, fill = "#00204DFF", alpha = .5) +
-  labs(
-    title = "",
-    x = "ms"
-  ) +
-  theme_custom
-
-brms_data_sim_posteriors_plot_grand_mean <-
-  brms_data_sim_posteriors %>%
-  dplyr::filter(parameter == "grand_mean") %>%
-  ggplot(aes(y = parameter, x = value)) +
-  stat_halfeyeh(.width = .95, fill = "#00204DFF", alpha = .5) +
-  labs(
-    title = "",
-    x = "ms",
-    y = ""
-  ) +
-  theme_custom
-
-brms_data_sim_posteriors_plot_cor <-
-  brms_data_sim_posteriors %>%
-  dplyr::filter(parameter == "cor_int_slope") %>%
-  ggplot(aes(y = parameter, x = value)) +
-  stat_halfeyeh(.width = .95, fill = "#00204DFF", alpha = .5) +
-  labs(
-    title = "",
-    x = "ms",
-    y = ""
-  ) +
-  theme_custom
-
-# combine plots
-brms_data_sim_posteriors_plot_ms + (brms_data_sim_posteriors_plot_grand_mean / brms_data_sim_posteriors_plot_cor) + plot_annotation(
-  title = "Posterior Distributions",
-  theme = theme(plot.title = element_text(size = 26, hjust = .5))
-)
-
-```
-
-## Synthetic Dataset
-
-Synthesize data using [`synthpop`](https://cran.r-project.org/web/packages/synthpop/vignettes/synthpop.pdf).
-
-```{r synthpop-data-sim}
-
-synthpop_data_sim <-
-  data_sim %>%
-  # dplyr::select(-item) %>%
-  syn(seed = seed_smorfia)
-
-
-
-
-
-%>%
-  pluck("syn") %>%
-  arrange(participant) %>%
-  group_by(participant) %>%
-  mutate(item = row_number()) %>%
-  ungroup() %>%
-  dplyr::select(participant, item, condition, RT) %>%
-  as_tibble()
-
-```
-
-```{r synthpop-data-sim-save, echo = FALSE}
-
-# show first 10 rows
-synthpop_data_sim %>%
-  head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
-# save as .csv
-write_csv(synthpop_data_sim, path = here("data/sim/synthpop_data_sim.csv"))
-
-```
-
-Plot the dataset
-
-```{r synthpop-data-sim-plot, echo = FALSE}
-
-# all trials
-synthpop_data_sim_plot_trials <-
-  synthpop_data_sim %>%
-  ggplot(aes(
-    x = condition,
-    y = RT,
-    color = condition,
-    fill = condition
-  )) +
-  geom_pirate(
-    bars = FALSE,
-    cis = TRUE,
-    lines = TRUE, lines_params = list(color = "black", alpha = .3),
-    points = TRUE, points_params = list(color = "black", shape = 21, size = 5, alpha = .1),
-    violins = TRUE, violins_params = list(size = 1),
-    show.legend = TRUE
-  ) +
-  scale_y_continuous(breaks = seq(0, 2000, 200)) +
-  scale_color_viridis_d(option = "cividis") +
-  scale_fill_viridis_d(option = "cividis") +
-  labs(
-    title = "all trials",
-    y = "ms"
-  ) +
-  theme_custom +
-  theme(legend.position = "none")
-
-# trial-averaged
-synthpop_data_sim_plot_ssj <-
-  synthpop_data_sim %>%
-  group_by(participant, condition) %>%
-  summarize(
-    RT = mean(RT)
-  ) %>%
-  ungroup() %>%
-  ggplot(aes(
-    x = condition,
-    y = RT,
-    color = condition,
-    fill = condition
-  )) +
-  geom_pirate(
-    bars = FALSE,
-    cis = TRUE,
-    lines = TRUE, lines_params = list(color = "black", alpha = .3),
-    points = TRUE, points_params = list(color = "black", shape = 21, size = 5, alpha = .4),
-    violins = TRUE, violins_params = list(size = 1),
-    show.legend = TRUE
-  ) +
-  scale_y_continuous(breaks = seq(0, 2000, 100)) +
-  scale_color_viridis_d(option = "cividis") +
-  scale_fill_viridis_d(option = "cividis") +
-  labs(
-    title = "trial-averaged",
-    y = "ms"
-  ) +
-  theme_custom +
-  theme(legend.position = "none")
-
-# combine plots
-synthpop_data_sim_plot_trials + synthpop_data_sim_plot_ssj +
-   plot_annotation(title = "Synthesized Reaction Times", 
-                   tag_levels = "A",
-                   theme = theme(plot.title = element_text(size = 26, hjust = .5))
-                   )
-
-```
-
-## Statistical Analysis
-
-```{r brms-synthpop-data-sim, include = FALSE, eval = FALSE}
-
-brms_synthpop_data_sim_t0 <- Sys.time()
-
-brms_synthpop_data_sim <-
-  brm(RT ~ condition + (1 | item) + (condition | participant),
-    data = synthpop_data_sim,
-    family = gaussian(),
-    prior = brms_priors,
-    sample_prior = TRUE,
-    save_all_pars = TRUE,
-    inits = "random",
-    control = list(
-      adapt_delta = .99,
-      max_treedepth = 15
-    ),
-    chains = num_chains,
-    iter = num_iter,
-    warmup = num_warmup,
-    thin = num_thin,
-    algorithm = "sampling",
-    cores = num_chains,
-    seed = seed_smorfia,
-    file = here("results/sim/brms_synthpop_data_sim.rds")
-  )
-
-brms_synthpop_data_sim_t1 <- Sys.time()
-
-brms_synthpop_data_sim_elapsed <- brms_synthpop_data_sim_t1 - brms_synthpop_data_sim_t0
-saveRDS(brms_synthpop_data_sim_elapsed, here("results/sim/brms_synthpop_data_sim_elapsed.rds"))
-
-```
-
-```{r brms-synthpop-data-sim-show, eval = FALSE}
-
-brms_synthpop_data_sim <-
-  brm(RT ~ condition + (1 | item) + (condition | participant),
-    data = synthpop_data_sim,
-    family = gaussian(),
-    prior = brms_priors,
-    sample_prior = TRUE,
-    save_all_pars = TRUE,
-    inits = "random",
-    control = list(
-      adapt_delta = .99,
-      max_treedepth = 15
-    ),
-    chains = num_chains,
-    iter = num_iter,
-    warmup = num_warmup,
-    thin = num_thin,
-    algorithm = "sampling",
-    cores = num_chains,
-    seed = seed_smorfia,
-    file = here("results/sim/brms_synthpop_data_sim.rds")
-  )
-
-```
-
-### Model Diagnostics
-
-```{r brms-synthpop-data-sim-load, include = FALSE}
-
-brms_synthpop_data_sim <-
-  readRDS(here("results/sim/brms_synthpop_data_sim.rds"))
-
-```
-
-```{r brms-synthpop-data-sim-diagnostics, echo = FALSE}
-
-## chain convergence
-# trace plots of MCMC draws
-brms_synthpop_data_sim_MCMC <-
-  brms_synthpop_data_sim %>%
-  posterior_samples(pars = "b_", add_chain = TRUE) %>%
-  dplyr::select(
-    "chain",
-    "intercept" = "b_Intercept",
-    "condition_outgroup" = "b_conditionoutgroup",
-  ) %>%
-  mcmc_trace(
-    facet_args = list(nrow = 3),
-    np = nuts_params(brms_synthpop_data_sim)
-  ) +
-  ggtitle("Chain Convergence") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# rank histograms
-brms_synthpop_data_sim_rank <-
-  brms_synthpop_data_sim %>%
-  posterior_samples(pars = "b_", add_chain = TRUE) %>%
-  dplyr::select(
-    "chain",
-    "intercept" = "b_Intercept",
-    "condition_outgroup" = "b_conditionoutgroup",
-  ) %>%
-  as_tibble() %>%
-  mcmc_rank_overlay(
-    n_bins = 20,
-    ref_line = TRUE
-  ) +
-  ggtitle("Rank Histograms") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# posterior predictive checks
-brms_synthpop_data_sim_PPC <-
-  brms_synthpop_data_sim %>%
-  posterior_predict(nsamples = 1000) %>%
-  ppc_stat_grouped(
-    y = pull(synthpop_data_sim, RT),
-    group = pull(synthpop_data_sim, condition),
-    stat = "mean"
-  ) +
-  ggtitle("Posterior Predictive Checks") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# combine plots
-brms_synthpop_data_sim_diagnostics_plots <- (brms_synthpop_data_sim_MCMC + brms_synthpop_data_sim_rank) / brms_synthpop_data_sim_PPC
-brms_synthpop_data_sim_diagnostics_plots[[1]] <- brms_synthpop_data_sim_diagnostics_plots[[1]] + plot_layout(tag_level = "new")
-brms_synthpop_data_sim_diagnostics_plots +
-  plot_annotation(
-    tag_levels = c("A", "1"),
-    title = "Model Diagnostics",
-    theme = theme(plot.title = element_text(size = 26, hjust = .5))
-  )
-
-```
-
-### Parameter Recovery
-
-```{r brms-synthpop-data-sim-results}
-
-brms_synthpop_data_sim
-
-```
-
-```{r brms-synthpop-data-sim-param-recovery}
-
-# extract samples from posterior distributions
-brms_synthpop_data_sim_posteriors <-
-  brms_synthpop_data_sim %>%
-  posterior_samples(add_chain = TRUE) %>%
-  dplyr::select(
-    "sample" = iter,
-    "grand_mean" = b_Intercept,
-    "cond_beta" = b_conditionoutgroup,
-    "item_sd" = sd_item__Intercept,
-    "subj_sd" = sd_participant__Intercept,
-    "subjslope_sd" = sd_participant__conditionoutgroup,
-    "cor_int_slope" = cor_participant__Intercept__conditionoutgroup,
-    "error_sd" = sigma
-  ) %>%
-  as_tibble() %>%
-  pivot_longer(grand_mean:error_sd, names_to = "parameter", values_to = "value")
-
-# comparison simulation vs. recovered parameters
-brms_synthpop_data_sim_posteriors %>%
-  group_by(parameter) %>%
-  summarize(mean_value = mean(value)) %>%
-  ungroup() %>%
-  mutate(parameter = factor(parameter,
-    levels = c(
-      "grand_mean", "cond_beta", "item_sd", "subj_sd",
-      "subjslope_sd", "cor_int_slope", "error_sd"
-    )
-  )) %>%
-  arrange(parameter) %>%
-  add_column(simulation = c(
-    grand_mean, cond_beta, item_sd, subj_sd,
-    subjslope_sd, cor_int_slope, error_sd
-  )) %>%
-  dplyr::rename(recovered = mean_value) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
-```
-
-```{r, brms-synthpop-data-sim-plot-posteriors, echo = FALSE}
-
-# plot posterior distributions
-brms_synthpop_data_sim_posteriors_plot_ms <-
-  brms_synthpop_data_sim_posteriors %>%
-  dplyr::filter(parameter %in% c("cond_beta", "item_sd", "subj_sd", "subjslope_sd", "error_sd")) %>%
-  ggplot(aes(y = parameter, x = value)) +
-  stat_halfeyeh(.width = .95, fill = "#00204DFF", alpha = .5) +
-  labs(
-    title = "",
-    x = "ms"
-  ) +
-  theme_custom
-
-brms_synthpop_data_sim_posteriors_plot_grand_mean <-
-  brms_synthpop_data_sim_posteriors %>%
-  dplyr::filter(parameter == "grand_mean") %>%
-  ggplot(aes(y = parameter, x = value)) +
-  stat_halfeyeh(.width = .95, fill = "#00204DFF", alpha = .5) +
-  labs(
-    title = "",
-    x = "ms",
-    y = ""
-  ) +
-  theme_custom
-
-brms_synthpop_data_sim_posteriors_plot_cor <-
-  brms_synthpop_data_sim_posteriors %>%
-  dplyr::filter(parameter == "cor_int_slope") %>%
-  ggplot(aes(y = parameter, x = value)) +
-  stat_halfeyeh(.width = .95, fill = "#00204DFF", alpha = .5) +
-  labs(
-    title = "",
-    x = "ms",
-    y = ""
-  ) +
-  theme_custom
-
-# combine plots
-brms_synthpop_data_sim_posteriors_plot_ms + (brms_synthpop_data_sim_posteriors_plot_grand_mean / brms_synthpop_data_sim_posteriors_plot_cor) + plot_annotation(
-  title = "Posterior Distributions",
-  theme = theme(plot.title = element_text(size = 26, hjust = .5))
-)
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r setup, include = FALSE}
-# 
-# ### install packages
-# install.packages(c(
-#   "knitr", "kableExtra",
-#   "tidyverse",
-#   "synthpop", "fakeR",
-#   "viridis", "gghighlight",
-#   "rstan", "brms",
-#   "tidybayes", "bayesplot", "bayestestR"
-# ),
-# dependencies = TRUE
-# )
-# devtools::install_github("mikabr/ggpirate", dependencies = TRUE)
-# devtools::install_github("easystats/bayestestR", dependencies = TRUE)
-
-# .libPaths("E:/R_workspace/packages") # add package directory (only on my Windows machine)
-
-### load packages
-library(knitr)
-library(kableExtra)
-library(tidyverse)
-library(synthpop)
-library(fakeR)
-library(viridis)
-library(ggpirate)
-library(gghighlight)
-library(rstan)
-library(brms)
-library(tidybayes)
-library(bayesplot)
-library(bayestestR)
-
-# for RMarkdown
-options(digits = 2) # number of decimal digits
-opts_chunk$set(
-  warning = FALSE, # no package warnings
-  message = FALSE # no package messages
-)
-
-# ggplot custom theme
-theme_custom <- theme_minimal(base_size = 16) +
-  theme(
-    strip.text = element_text(
-      hjust = .5,
-      size = 20
-    ),
-    legend.title = element_blank(),
-    plot.title = element_text(size = 26, hjust = .5),
-    legend.box.background = element_rect(color = "transparent") # transparent outer line
-  )
-
-seed_smorfia <- 90 # 'A paura!
-set.seed(seed_smorfia) # seed for random number generation
-
-# cividis color palette for bayesplot
-color_scheme_set("viridisE")
-
-# setup for STAN
-rstan_options(auto_write = TRUE) # avoid recompilation of unchanged models
-options(mc.cores = parallel::detectCores())
-
-# MCMC parameters
-num_cores <- 8 # number of cores in processor of computer used for analysis (parallel::detectCores())
-num_chains <- num_cores # number of chains = number of cores in processor of computer used for analysis
-num_iter <- 2000 # number of samples per chain
-num_warmup <- 1000 # number of warm-up samples per chain
-num_thin <- 1 # thinning: extract one out of x samples per chain
-
-lm_priors <- prior("normal(1, 5)", class = "b") # weakly informative priors on beta coefficients
+MLM_plot
 
 ```
 
 ***
 ***
-
-
-# Data
-
-Simulate EEG data from a [previous project](https://asch3tti.netlify.com/papers/2018_EmoSizeCont_SciRep.pdf). Here, we will synthesize the amplitude values of the **P1** component and only look at the differences between large and small font size (i.e., averaged across contrast and emotion).
-
-```{r data_orig}
-
-# full dataset
-SizeContEmo <- 
-  read_csv("SizeContEmo_trialEEG.csv") %>%
-  mutate(
-    participant = as.factor(participant),
-    condition = recode(factor(condition),
-      "1" = "negative_large_dark",
-      "2" = "negative_small_dark",
-      "3" = "negative_large_bright",
-      "4" = "negative_small_bright",
-      "5" = "neutral_large_dark",
-      "6" = "neutral_small_dark",
-      "7" = "neutral_large_bright",
-      "8" = "neutral_small_bright"
-    )
-  )
-
-# P1, only font size (averaged across contrast and emotion)
-P1 <- 
-  SizeContEmo %>%
-  mutate(source = factor("original")) %>%
-  separate(condition, c("emotion", "size", "contrast"), sep = "_", remove = FALSE) %>%
-  mutate(size = as.factor(size)) %>%
-  dplyr::select(participant, trial, size, amplitude = P1, source)
-
-write_csv(P1, path = paste0(getwd(), "/P1_orig.csv")) # save data
-
-# summary
-P1 %>%
-  group_by(size) %>%
-  summarize(
-    mean = mean(amplitude),
-    sd = sd(amplitude),
-    hdi89_low = tidybayes::hdi(amplitude, .width = .89)[1],
-    hdi89_high = tidybayes::hdi(amplitude, .width = .89)[2]
-  ) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
-```
-
-## synthpop
-
-Synthesize data using [`synthpop`](https://cran.r-project.org/web/packages/synthpop/vignettes/synthpop.pdf).
-
-```{r data_synthpop}
-
-P1_synthpop <-
-  P1 %>%
-  dplyr::select(-trial) %>%
-  syn(seed = seed_smorfia) %>%
-  pluck("syn") %>%
-  arrange(participant) %>%
-  group_by(participant) %>%
-  mutate(
-    trial = row_number(),
-    source = factor("synthpop")
-  ) %>%
-  ungroup() %>%
-  dplyr::select(participant, trial, size, amplitude, source)
-
-write_csv(P1_synthpop, path = paste0(getwd(), "/P1_synthpop.csv"))
-
-```
-
-## fakeR
-
-Synthesize data using [`fakeR`](https://cran.r-project.org/web/packages/fakeR/fakeR.pdf).
-
-```{r data_fakeR}
-
-P1_fakeR <-
-  P1 %>%
-  dplyr::select(-trial) %>%
-  as.data.frame() %>%
-  simulate_dataset() %>%
-  arrange(participant) %>%
-  group_by(participant) %>%
-  mutate(
-    trial = row_number(),
-    source = factor("fakeR")
-  ) %>%
-  ungroup() %>%
-  dplyr::select(participant, trial, size, amplitude, source)
-
-write_csv(P1_fakeR, path = paste0(getwd(), "/P1_fakeR.csv"))
-
-```
-
-## faux
-
-The package [`faux`](https://debruine.github.io/faux/articles/sim_mixed.html#sim_mixed_df) is under development, but promising.
-
-## simPop
-
-The package [`simPop`](https://cran.r-project.org/web/packages/simPop/simPop.pdf) creates synthetic survey data. 
-
-## Data comparison
-
-Compare original and datasets synthesized with `synthpop` and `fakeR`.
-
-```{r data_compare}
-
-# merge original and simulated data
-P1_merged <-
-  P1 %>%
-  bind_rows(P1_synthpop) %>%
-  bind_rows(P1_fakeR) %>%
-  mutate(source = factor(source,
-    levels = c("original", "synthpop", "fakeR"),
-    ordered = TRUE
-  ))
-
-write_csv(P1_merged, path = paste0(getwd(), "/P1_merged.csv"))
-
-# summary
-P1_merged %>%
-  group_by(source, size) %>%
-  summarize(
-    mean = mean(amplitude),
-    sd = sd(amplitude),
-    hdi89_low = tidybayes::hdi(amplitude, .width = .89)[1],
-    hdi89_high = tidybayes::hdi(amplitude, .width = .89)[2]
-  ) %>%
-  ungroup() %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
-# plot
-P1_merged %>%
-  ggplot(aes(
-    x = source,
-    y = amplitude,
-    color = source,
-    fill = source
-  )) +
-  geom_pirate(
-    bars = FALSE,
-    cis = TRUE,
-    lines = TRUE, lines_params = list(color = "black"),
-    points = TRUE, points_params = list(shape = 16, size = 5, alpha = .2),
-    violins = TRUE, violins_params = list(size = 1),
-    show.legend = TRUE
-  ) +
-
-  scale_color_viridis_d(option = "cividis") +
-  scale_fill_viridis_d(option = "cividis") +
-  scale_y_continuous(
-    limits = c(-24, 24),
-    breaks = seq(-24, 24, 4)
-  ) +
-  facet_wrap(~size, scales = "free") +
-  ggtitle("P1") +
-  theme_custom +
-  theme(legend.position="none")
-  
-```
-
-# Model fit
-
-## Original data
-
-```{r lm_orig, eval = FALSE}
-
-lm_orig <-
-  brm(amplitude ~ 0 + size, # formula
-    data = P1, # data
-    family = gaussian(), # likelihood function
-    prior = lm_priors, # priors
-    sample_prior = TRUE, # draw samples from priors?
-    inits = "random", # initial parameter values in the chains
-    control = list( # parameters of NUTS sampler
-      adapt_delta = .99,
-      max_treedepth = 15
-    ),
-    chains = num_chains, # number of chains
-    iter = num_iter, # number of iterations
-    warmup = num_warmup, # number of warm-up samples
-    thin = num_thin, # thinning rate
-    algorithm = "sampling", # type of sampling algorithm
-    cores = num_chains, # number of processor cores to use when running chains in parallel
-    seed = seed_smorfia # RNG seed
-  )
-
-saveRDS(lm_orig, file = paste0(getwd(), "/lm_orig.rds"), compress = "gzip") # save results
-
-```
-
-### Diagnostics and summary
-
-```{r diagnostics_lm_orig}
-
-lm_orig <- readRDS(file = paste0(getwd(), "/lm_orig.rds")) # load model
-
-# summary posterior distributions & diagnostics
-lm_orig_describe_posterior <-
-  describe_posterior(lm_orig,
-    centrality = "median",
-    ci = 0.89,
-    ci_method = "hdi",
-    test = NULL,
-    diagnostic = "all"
-  ) %>%
-  mutate(Parameter = recode(factor(Parameter),
-    "b_sizelarge" = "large",
-    "b_sizesmall" = "small"
-  )) %>%
-  print()
-
-# MCMC chain convergence
-lm_orig %>%
-  spread_draws(`b_.*`, regex = TRUE) %>%
-  dplyr::select(
-    "chain" = ".chain",
-    "large" = "b_sizelarge",
-    "small" = "b_sizesmall"
-  ) %>%
-  as.data.frame() %>%
-  mcmc_trace(facet_args = list(nrow = 2)) +
-  ggtitle("chain convergence") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# posterior predictive checks
-lm_orig %>%
-  posterior_predict(draws = 500) %>%
-  ppc_stat_grouped(
-    y = pull(P1, amplitude),
-    group = pull(P1, size),
-    stat = "mean",
-    facet_args = list(nrow = 2)
-  ) +
-  ggtitle("posterior predictive checks") +
-  theme_custom +
-  theme(legend.position = "none")
-
-```
-
-## synthpop
-
-```{r lm_synthpop, eval = FALSE}
-
-# update previous model with synthpop data
-lm_synthpop <-
-  update(lm_orig,
-    newdata = P1_synthpop,
-    seed = seed_smorfia
-  )
-
-saveRDS(lm_synthpop, file = paste0(getwd(), "/lm_synthpop.rds"), compress = "gzip")
-
-```
-
-### Diagnostics and summary
-
-```{r diagnostics_lm_synthpop}
-
-lm_synthpop <- readRDS(file = paste0(getwd(), "/lm_synthpop.rds"))
-
-# summary posterior distributions & diagnostics
-lm_synthpop_describe_posterior <-
-  describe_posterior(lm_synthpop,
-    centrality = "median",
-    ci = 0.89,
-    ci_method = "hdi",
-    test = NULL,
-    diagnostic = "all"
-  ) %>%
-  mutate(Parameter = recode(factor(Parameter),
-    "b_sizelarge" = "large",
-    "b_sizesmall" = "small"
-  )) %>%
-  print()
-
-# MCMC chain convergence
-lm_synthpop %>%
-  spread_draws(`b_.*`, regex = TRUE) %>%
-  dplyr::select(
-    "chain" = ".chain",
-    "large" = "b_sizelarge",
-    "small" = "b_sizesmall"
-  ) %>%
-  as.data.frame() %>%
-  mcmc_trace(facet_args = list(nrow = 2)) +
-  ggtitle("chain convergence") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# posterior predictive checks
-lm_synthpop %>%
-  posterior_predict(draws = 500) %>%
-  ppc_stat_grouped(
-    y = pull(P1_synthpop, amplitude),
-    group = pull(P1_synthpop, size),
-    stat = "mean",
-    facet_args = list(nrow = 2)
-  ) +
-  ggtitle("posterior predictive checks") +
-  theme_custom +
-  theme(legend.position = "none")
-
-```
-
-## fakeR
-
-```{r lm_fakeR, eval = FALSE}
-
-lm_fakeR <-
-  update(lm_orig,
-    newdata = P1_fakeR,
-    seed = seed_smorfia
-  )
-
-saveRDS(lm_fakeR, file = paste0(getwd(), "/lm_fakeR.rds"), compress = "gzip")
-
-```
-
-### Diagnostics and summary
-
-```{r diagnostics_lm_fakeR}
-
-lm_fakeR <- readRDS(file = paste0(getwd(), "/lm_fakeR.rds"))
-
-# summary posterior distributions & diagnostics
-lm_fakeR_describe_posterior <-
-  describe_posterior(lm_fakeR,
-    centrality = "median",
-    ci = 0.89,
-    ci_method = "hdi",
-    test = NULL,
-    diagnostic = "all"
-  ) %>%
-  mutate(Parameter = recode(factor(Parameter),
-    "b_sizelarge" = "large",
-    "b_sizesmall" = "small"
-  )) %>%
-  print()
-
-# MCMC chain convergence
-lm_fakeR %>%
-  spread_draws(`b_.*`, regex = TRUE) %>%
-  dplyr::select(
-    "chain" = ".chain",
-    "large" = "b_sizelarge",
-    "small" = "b_sizesmall"
-  ) %>%
-  as.data.frame() %>%
-  mcmc_trace(facet_args = list(nrow = 2)) +
-  ggtitle("chain convergence") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# posterior predictive checks
-lm_fakeR %>%
-  posterior_predict(draws = 500) %>%
-  ppc_stat_grouped(
-    y = pull(P1_fakeR, amplitude),
-    group = pull(P1_fakeR, size),
-    stat = "mean",
-    facet_args = list(nrow = 2)
-  ) +
-  ggtitle("posterior predictive checks") +
-  theme_custom +
-  theme(legend.position = "none")
-
-```
-
-# Comparison of posterior distributions
-
-```{r posteriors}
-
-# posterior distributions of model run on original data
-posterior_orig <-
-  lm_orig %>%
-  spread_draws(`b_.*`, regex = TRUE) %>%
-  dplyr::select(
-    "orig_large" = "b_sizelarge",
-    "orig_small" = "b_sizesmall",
-  )
-
-# posterior distributions of model run on data generated with synthpop
-posterior_synthpop <-
-  lm_synthpop %>%
-  spread_draws(`b_.*`, regex = TRUE) %>%
-  dplyr::select(
-    "synthpop_large" = "b_sizelarge",
-    "synthpop_small" = "b_sizesmall",
-  )
-
-# posterior distributions of model run on data generated with fakeR
-posterior_fakeR <-
-  lm_fakeR %>%
-  spread_draws(`b_.*`, regex = TRUE) %>%
-  dplyr::select(
-    "fakeR_large" = "b_sizelarge",
-    "fakeR_small" = "b_sizesmall",
-  )
-
-# all posterior differences in one data frame
-posterior_differences <-
-  tibble(
-    "origVSsynthpop-large" = posterior_orig$orig_large - posterior_synthpop$synthpop_large,
-    "origVSsynthpop-small" = posterior_orig$orig_small - posterior_synthpop$synthpop_small,
-    "origVSfakeR-large" = posterior_orig$orig_large - posterior_fakeR$fakeR_large,
-    "origVSfakeR-small" = posterior_orig$orig_small - posterior_fakeR$fakeR_small,
-  )
-
-# summary posterior distributions & diagnostics
-all_describe_posteriors <-
-  describe_posterior(posterior_differences,
-    centrality = "median",
-    ci = 0.89,
-    ci_method = "hdi",
-    test = NULL,
-    diagnostic = "all"
-  ) %>%
-  separate(Parameter, c("source", "condition"), sep = "-", remove = TRUE)
-
-```
-
-## Original data vs. synthpop
-
-Posterior distributions of model run on **original data** minus posterior distributions of model run on data generated with **`synthpop`**.
-
-```{r origVSsynthpop}
-
-origVSsynthpop_posterior_differences <-
-  posterior_differences %>%
-  dplyr::select_at(vars(contains("origVSsynthpop")))
-
-# summary posterior distributions & diagnostics
-origVSsynthpop_describe_posteriors <-
-  all_describe_posteriors %>%
-  dplyr::filter(source == "origVSsynthpop") %>%
-  print()
-
-# hypothesis testing
-# if at least 95% of the 100% HDI is outside the ROPE, reject H0
-origVSsynthpop_ropeHDI <-
-  equivalence_test(origVSsynthpop_posterior_differences,
-    range = c(-0.1, 0.1),
-    ci = 1
-  )
-
-# decision on H0
-plot(origVSsynthpop_ropeHDI) +
-  theme_custom
-
-```
-
-## Original data vs. fakeR
-
-Posterior distributions of model run on **original data** minus posterior distributions of model run on data generated with **`fakeR`**.
-
-```{r origVSfakeR}
-
-origVSfakeR_posterior_differences <-
-  posterior_differences %>%
-  dplyr::select_at(vars(contains("origVSfakeR")))
-
-# summary posterior distributions & diagnostics
-origVSfakeR_describe_posteriors <-
-  all_describe_posteriors %>%
-  dplyr::filter(source == "origVSfakeR") %>%
-  print()
-
-# hypothesis testing
-origVSfakeR_ropeHDI <-
-  equivalence_test(origVSfakeR_posterior_differences,
-    range = c(-0.1, 0.1),
-    ci = 1
-  )
-
-# decision on H0
-plot(origVSfakeR_ropeHDI) +
-  theme_custom
-
-```
-
-## Conclusion
-
-The statistical results obtained using the original dataset and the synthetic data created with `synthpop` are very similar, whereas `fakeR` might include some assumptions in the data generating process that change the statistical results.
-
-***
-***
-
-# Simulations
-
-The discrepancies between the results obtained using the original dataset and the synthetic data created with `fakeR` might just be random and not a systematic bias due to model assumptions. To investigate further, I will:
-
-- generate 1000 datasets with `synthpop` and `fakeR`
-- run the same linear models as above on all datasets and store the summaries of the posterior distributions of the parameters of interest
-- calculate the percentage of the differences between the posterior distributions of models run on original data and models run on synthetic data
-
-## synthpop
-
-```{r synthpop_sim_function}
-
-# function that only keeps parameters of interest for each simulation
-synthpop_sim_fit <- function(seed, cred_intvl) {
-  
-  set.seed(seed)
-
-  # percentiles corresponding to the chosen credible interval
-  prob_low <- (1 - cred_intvl) / 2
-  prob_high <- 1 - prob_low
-
-  d <-
-    P1 %>%
-    dplyr::select(-trial) %>%
-    syn(seed = seed) %>%
-    pluck("syn") %>%
-    arrange(participant) %>%
-    group_by(participant) %>%
-    mutate(
-      trial = row_number(),
-      source = factor("synthpop")
-    ) %>%
-    ungroup() %>%
-    dplyr::select(participant, trial, size, amplitude, source)
-
-  update(lm_orig,
-    newdata = d,
-    seed = seed
-  ) %>%
-    spread_draws(`b_.*`, regex = TRUE) %>%
-    dplyr::select(
-      "synthpop_large" = "b_sizelarge",
-      "synthpop_small" = "b_sizesmall",
-    ) %>%
-    mutate(
-      "origVSsynthpop-large" = posterior_orig$orig_large - synthpop_large,
-      "origVSsynthpop-small" = posterior_orig$orig_small - synthpop_small
-    ) %>%
-    posterior_summary(
-      probs = c(prob_low, prob_high),
-      robust = TRUE # compute median and MAD
-    ) %>%
-    as_tibble(rownames = "parameter") %>%
-    rename(
-      "median" = 2,
-      "mad" = 3,
-      "lowerCrI" = 4,
-      "upperCrI" = 5
-    ) %>%
-    add_column(CrI = cred_intvl)
-  
-}
-
-```
-
-```{r sim_synthpop, eval = FALSE}
-
-n_sim <- 100 # number of iterations
-
-CrInt <- .89 # width credible interval
-# https://easystats.github.io/bayestestR/articles/credible_interval.html#why-is-the-default-89
-
-t1 <- Sys.time()
-
-sim_synthpop <-
-  tibble(seed = 1:n_sim) %>%
-  mutate(tidy = map(seed,
-    synthpop_sim_fit,
-    cred_intvl = CrInt
-  )) %>%
-  unnest(tidy)
-
-t2 <- Sys.time()
-
-sim_synthpop_elapsed <- t2 - t1
-saveRDS(sim_synthpop_elapsed, file = paste0(getwd(), "/sim_synthpop_elapsed.rds"), compress = "gzip")
-
-saveRDS(sim_synthpop, file = paste0(getwd(), "/sim_synthpop_params.rds"), compress = "gzip")
-
-```
-
-```{r sim_synthpop_knit}
-
-n_sim <- 100
-sim_synthpop_elapsed <- readRDS(paste0(getwd(), "/sim_synthpop_elapsed.rds"))
-
-```
-
-Elapsed time for `r n_sim` simulations: `r sim_synthpop_elapsed`.
-
-```{r sim_synthpop_result}
-
-summary_sim_synthpop <-
-  readRDS(paste0(getwd(), "/sim_synthpop_params.rds")) %>%
-  dplyr::filter(parameter %in% c("origVSsynthpop-large", "origVSsynthpop-small")) %>%
-  mutate( # tag posteriors excluding 0 (i.e., rejecting H0)
-    check_H0 = case_when(
-      lowerCrI > 0 ~ 1,
-      upperCrI < 0 ~ 1,
-      TRUE ~ 0
-    )
-  )
-
-# plot
-summary_sim_synthpop %>%
-  ggplot(aes(x = seed, y = median, ymin = lowerCrI, ymax = upperCrI, color = check_H0)) +
-  geom_pointrange(fatten = 3) +
-  scale_x_discrete("seed (i.e., simulation index)", breaks = NULL) +
-  scale_color_viridis(option = "B") +
-  ylab(expression(beta)) +
-  facet_wrap(parameter ~ ., ncol = 1, scales = "free") +
-  gghighlight(check_H0 == 1) +
-  ggtitle("synthpop") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# percentage of posterior distributions excluding 0 (i.e., rejecting H0)
-outliers <- summary_sim_synthpop %>%
-  group_by(parameter) %>%
-  summarise(percentage_outliers = mean(check_H0) * 100) %>%
-  ungroup() %>%
-  print()
-
-```
-
-## fakeR
-
-```{r fakeR_sim_function}
-
-fakeR_sim_fit <- function(seed, cred_intvl) {
-  
-  set.seed(seed)
-
-  prob_low <- (1 - cred_intvl) / 2
-  prob_high <- 1 - prob_low
-
-  d <-
-    P1 %>%
-    dplyr::select(-trial) %>%
-    as.data.frame() %>%
-    simulate_dataset() %>%
-    arrange(participant) %>%
-    group_by(participant) %>%
-    mutate(
-      trial = row_number(),
-      source = factor("fakeR")
-    ) %>%
-    ungroup() %>%
-    dplyr::select(participant, trial, size, amplitude, source)
-
-  update(lm_orig,
-    newdata = d,
-    seed = seed
-  ) %>%
-    spread_draws(`b_.*`, regex = TRUE) %>%
-    dplyr::select(
-      "fakeR_large" = "b_sizelarge",
-      "fakeR_small" = "b_sizesmall",
-    ) %>%
-    mutate(
-      "origVSfakeR-large" = posterior_orig$orig_large - fakeR_large,
-      "origVSfakeR-small" = posterior_orig$orig_small - fakeR_small
-    ) %>%
-    posterior_summary(
-      probs = c(prob_low, prob_high),
-      robust = TRUE
-    ) %>%
-    as_tibble(rownames = "parameter") %>%
-    rename(
-      "median" = 2,
-      "mad" = 3,
-      "lowerCrI" = 4,
-      "upperCrI" = 5
-    ) %>%
-    add_column(CrI = cred_intvl)
-  
-}
-
-```
-
-```{r sim_fakeR, eval = FALSE}
-
-n_sim <- 100
-
-CrInt <- .89
-
-t3 <- Sys.time()
-
-sim_fakeR <-
-  tibble(seed = 1:n_sim) %>%
-  mutate(tidy = map(seed,
-    fakeR_sim_fit,
-    cred_intvl = CrInt
-  )) %>%
-  unnest(tidy)
-
-t4 <- Sys.time()
-
-sim_fakeR_elapsed <- t4 - t3
-saveRDS(sim_fakeR_elapsed, file = paste0(getwd(), "/sim_fakeR_elapsed.rds"), compress = "gzip")
-
-saveRDS(sim_fakeR, file = paste0(getwd(), "/sim_fakeR_params.rds"), compress = "gzip")
-
-```
-
-```{r sim_fakeR_knit}
-
-n_sim <- 100
-sim_fakeR_elapsed <- readRDS(paste0(getwd(), "/sim_fakeR_elapsed.rds"))
-
-```
-
-Elapsed time for `r n_sim` simulations: `r sim_fakeR_elapsed`.
-
-```{r sim_fakeR_result}
-
-summary_sim_fakeR <-
-  readRDS(paste0(getwd(), "/sim_fakeR_params.rds")) %>%
-  dplyr::filter(parameter %in% c("origVSfakeR-large", "origVSfakeR-small")) %>%
-  mutate(
-    check_H0 = case_when(
-      lowerCrI > 0 ~ 1,
-      upperCrI < 0 ~ 1,
-      TRUE ~ 0
-    )
-  )
-
-# plot
-summary_sim_fakeR %>%
-  ggplot(aes(x = seed, y = median, ymin = lowerCrI, ymax = upperCrI, color = check_H0)) +
-  geom_pointrange(fatten = 3) +
-  scale_x_discrete("seed (i.e., simulation index)", breaks = NULL) +
-  scale_color_viridis(option = "B") +
-  ylab(expression(beta)) +
-  facet_wrap(parameter ~ ., ncol = 1, scales = "free") +
-  gghighlight(check_H0 == 1) +
-  ggtitle("synthpop") +
-  theme_custom +
-  theme(legend.position = "none")
-
-# percentage of posterior distributions excluding 0 (i.e., rejecting H0)
-outliers <- summary_sim_fakeR %>%
-  group_by(parameter) %>%
-  summarise(percentage_outliers = mean(check_H0) * 100) %>%
-  ungroup() %>%
-  print()
-
-```
-
-***
-***
-
-
