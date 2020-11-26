@@ -80,8 +80,8 @@ Here are some reasons[^1]:
   - what are the distributional properties of the data?
   - are model assumptions appropriate?
 - power analysis
-  - assuming your hypothetical design, what is the probability
-
+  - what effect size is your experimental design sensitive to?
+  - how does sensitivity change as a function of the number of participants and/or trials?
 - plan data management
   - size and type of data and model files
   - folder structure
@@ -90,27 +90,7 @@ Here are some reasons[^1]:
   - is your statistical model computationally feasible?
   - if the results of the power analysis require a large number of participants and/or trials, do you have enough time and/or resources?
 
-
-
-
-
-
-
-
-    You force yourself to consider the kinds of numbers you will be collecting. Specifically, the distributional properties of those numbers. You will have to make decisions about the distributions that you sample from in your simulation, and thinking about this issue helps you better understand your own data when you get it.
-
-    You learn a bit of computer programming, and this is a very useful general skill that you can build upon to do many things.
-
-    You can make reasonable and informed assumptions about how your experiment might turn out, and then use the results of your simulation to choose parameters for your design (such as number of subjects, number of observations per condition and subject) that will improve the sensitivity of your design to detect the effects you are interested in measuring.
-
-    You can even run simulations on the data that you collect to learn more about how it behaves, and to do other kinds of advanced statistics that we don’t discuss in this book.
-
-    You get to improve your intuitions about how data behaves when you measure it. You can test your intuitions by running simulations, and you can learn things you didn’t know to begin with. Simulations can be highly informative.
-
-    When you simulate data in advance of collecting real data, you can work out exactly what kinds of tests you are planning to perform, and you will have already written your analysis code, so it will be ready and waiting for you as soon as you collect the data
-
-
-
+# How to simulate data in R
 
 There are many ways to simulate data in R. The easiest way is to use base R functions. Here we use `rnorm` to generate 1000 random samples from a normal distribution with mean = 0 and standard deviation = 1:
 
@@ -139,6 +119,17 @@ rnorm_data %>%
 ```
 
 Other functions allow you to sample from different distributions, e.g., uniform (`runif`), binomial (`rbinom`), Student's t (`rt`), and more (for a complete list, type `?distributions` in the console).
+
+However, in this workshop we will be using the package `faux`, created by [Prof. Lisa DeBruine](https://www.gla.ac.uk/researchinstitutes/neurosciencepsychology/staff/lisadebruine/). 
+
+
+
+
+**WHY?**
+
+
+
+
 
 
 # One-sample t-test
