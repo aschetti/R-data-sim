@@ -26,6 +26,7 @@ set.seed(seed_smorfia) # seed for random number generation
 # install.packages("faux")
 # install.packages("rstatix")
 # install.packages("lme4")
+# install.packages("broom.mixed")
 # install.packages("ggpubr")
 
 ### load packages
@@ -40,7 +41,7 @@ library(broom.mixed)
 library(ggpubr)
 
 # for RMarkdown
-options(digits = 2) # number of decimal digits
+# options(digits = 2) # number of decimal digits
 opts_chunk$set(
   echo = TRUE, # show code
   warning = FALSE, # no package warnings
@@ -58,12 +59,87 @@ theme_custom <-
     ),
     plot.title = element_text(size = 26, hjust = .5),
     legend.box.background = element_rect(color = "transparent"),
-    legend.position = "right"
+    legend.position = "none"
   )
+
 ```
 
 ***
 ***
+
+# Why simulate data?
+
+Here are some reasons[^1]:
+
+- analyze your experimental design
+  - number of groups?
+  - number of participants?
+  - number of conditions?
+  - number of trials for each condition?
+- evaluate your statistical procedures
+  - what are the distributional properties of the data?
+  - are model assumptions appropriate?
+- power analysis
+  - assuming your hypothetical design, what is the probability
+
+- plan data management
+  - size and type of data and model files
+  - folder structure
+- practical feasibility
+  - is there enough information in the literature to simulate plausible scenarios?
+  - is your statistical model computationally feasible?
+  - if the results of the power analysis require a large number of participants and/or trials, do you have enough time and/or resources?
+
+
+
+
+
+
+
+
+    You force yourself to consider the kinds of numbers you will be collecting. Specifically, the distributional properties of those numbers. You will have to make decisions about the distributions that you sample from in your simulation, and thinking about this issue helps you better understand your own data when you get it.
+
+    You learn a bit of computer programming, and this is a very useful general skill that you can build upon to do many things.
+
+    You can make reasonable and informed assumptions about how your experiment might turn out, and then use the results of your simulation to choose parameters for your design (such as number of subjects, number of observations per condition and subject) that will improve the sensitivity of your design to detect the effects you are interested in measuring.
+
+    You can even run simulations on the data that you collect to learn more about how it behaves, and to do other kinds of advanced statistics that we don’t discuss in this book.
+
+    You get to improve your intuitions about how data behaves when you measure it. You can test your intuitions by running simulations, and you can learn things you didn’t know to begin with. Simulations can be highly informative.
+
+    When you simulate data in advance of collecting real data, you can work out exactly what kinds of tests you are planning to perform, and you will have already written your analysis code, so it will be ready and waiting for you as soon as you collect the data
+
+
+
+
+There are many ways to simulate data in R. The easiest way is to use base R functions. Here we use `rnorm` to generate 1000 random samples from a normal distribution with mean = 0 and standard deviation = 1:
+
+```{r rnorm-data}
+
+rnorm_data <- rnorm(1000, mean = 0, sd = 1)
+
+# show first 10 samples
+head(rnorm_data, 10) 
+
+```
+
+```{r rnorm-plot}
+
+rnorm_data %>%
+  as_tibble() %>%
+  ggplot(aes(x = value)) +
+    geom_histogram(
+    bins = 50,
+    color = "black",
+    fill = "#00AFBB"
+  ) +
+  ggtitle("Normal distribution") +
+  theme_custom
+
+```
+
+Other functions allow you to sample from different distributions, e.g., uniform (`runif`), binomial (`rbinom`), Student's t (`rt`), and more (for a complete list, type `?distributions` in the console).
+
 
 # One-sample t-test
 
@@ -124,7 +200,9 @@ ttest_onesample_results <-
     detailed = FALSE
   )
 
-ttest_onesample_results
+ttest_onesample_results %>%
+  kable(digits = 12) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
@@ -133,28 +211,11 @@ ttest_onesample_results
 ```{r ttest-onesample-plot}
 
 ttest_onesample_plot <-
-  ggviolin(
-    ttest_onesample_data, # data
-    x = "condition", # independent variable
-    y = "value", # dependent variable
-    color = "#00AFBB", # density: line color
-    linetype = "solid", # density: line type
-    size = 1, # density: line width
-    fill = "#00AFBB", # density: fill color
-    alpha = .5, # density: fill color transparency
-    trim = TRUE, # density: trim tails
-    width = 1, # density: width
-    add = c("boxplot", "jitter"), # overlay boxplot and jittered individual data points
-    add.params = list(
-      color = "black", # color of boxplot lines and jittered points
-      fill = "white" # fill color of boxplot
-    ),
-    title = "One-sample t-test", # plot title
-    xlab = "Condition", # x-axis: title
-    ylab = "Value", # y-axis: title
-    label.rectangle = TRUE, # rectangle underneath text
-    ggtheme = theme_custom # ggplot theme
-  )
+  ttest_onesample_data %>%
+  plot_design(geoms = c("box", "violin", "jitter")) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "#440154FF", size = 1.2) +
+  ggtitle("One-sample t-test") +
+  theme_custom
 
 ggsave( # save to file
   filename = "ttest_onesample_plot.png",
@@ -230,7 +291,9 @@ ttest_between_results <-
     detailed = FALSE
   )
 
-ttest_between_results
+ttest_between_results %>%
+  kable(digits = 12) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
@@ -239,35 +302,10 @@ ttest_between_results
 ```{r ttest-between-plot}
 
 ttest_between_plot <-
-  ggviolin(
-    ttest_between_data,
-    x = "treatment",
-    y = "value",
-    color = "treatment",
-    size = 1,
-    fill = "treatment",
-    palette = c("#00AFBB", "#E7B800"), # density: color palette by groups
-    alpha = .5,
-    linetype = "solid",
-    trim = TRUE,
-    width = 1,
-    add = c("boxplot", "jitter"),
-    add.params = list(
-      color = "black",
-      fill = "white"
-    ),
-    title = "Between-subject t-test",
-    xlab = "Treatment",
-    ylab = "Value",
-    label.rectangle = TRUE,
-    ggtheme = theme_custom
-  ) +
-  stat_compare_means( # add test results in graph
-    method = "t.test",
-    paired = FALSE,
-    method.args = list(alternative = "two.sided"),
-    hide.ns = FALSE # hide non-significant comparisons?
-  )
+  ttest_between_data %>%
+  plot_design(geoms = c("box", "violin", "jitter")) +
+  ggtitle("Between-subject t-test") +
+  theme_custom
 
 ggsave(
   filename = "ttest_between_plot.png",
@@ -345,7 +383,9 @@ ttest_within_results <-
     detailed = FALSE
   )
 
-ttest_within_results
+ttest_within_results %>%
+  kable(digits = 12) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
@@ -354,35 +394,10 @@ ttest_within_results
 ```{r ttest-within-plot}
 
 ttest_within_plot <-
-  ggviolin(
-    ttest_within_data,
-    x = "condition",
-    y = "value",
-    color = "condition",
-    size = 1,
-    fill = "condition",
-    palette = c("#00AFBB", "#E7B800"),
-    alpha = .5,
-    linetype = "solid",
-    trim = TRUE,
-    width = 1,
-    add = c("boxplot", "jitter"),
-    add.params = list(
-      color = "black",
-      fill = "white"
-    ),
-    title = "Within-subject t-test",
-    xlab = "Condition",
-    ylab = "Value",
-    label.rectangle = TRUE,
-    ggtheme = theme_custom
-  ) +
-  stat_compare_means(
-    method = "t.test",
-    paired = TRUE,
-    method.args = list(alternative = "two.sided"),
-    hide.ns = FALSE
-  )
+  ttest_within_data %>%
+  plot_design(geoms = c("box", "violin", "jitter")) +
+  ggtitle("Within-subject t-test") +
+  theme_custom
 
 ggsave(
   filename = "ttest_within_plot.png",
@@ -551,33 +566,11 @@ ANOVA_pairwise_condition
 ```{r ANOVA-plot}
 
 ANOVA_plot <-
-  ggviolin(
-    ANOVA_data,
-    x = "treatment",
-    y = "value",
-    color = "condition",
-    size = 1,
-    fill = "condition",
-    palette = c("#00AFBB", "#E7B800", "#FC4E07"),
-    alpha = .5,
-    linetype = "solid",
-    trim = TRUE,
-    width = 1,
-    add = c("boxplot", "jitter"),
-    add.params = list(
-      fill = "white"
-    ),
-    title = "Mixed ANOVA",
-    xlab = "Treatment",
-    ylab = "Value",
-    label.rectangle = TRUE,
-    facet.by = "condition",
-    ggtheme = theme_custom
-  ) +
-  stat_compare_means(
-    method = "t.test",
-    label.y = c(6, 6, 6)
-  )
+  ANOVA_data %>%
+  plot_design(geoms = c("box", "violin", "jitter")) +
+  ggtitle("Mixed ANOVA") +
+  theme_custom +
+  theme(legend.position = "right")
 
 ggsave(
   filename = "ANOVA_plot.png",
@@ -733,28 +726,26 @@ tibble(
 
 MLM_plot <-
   ggviolin(
-    MLM_data,
-    x = "condition",
-    y = "value",
-    color = "condition",
-    size = 1,
-    fill = "condition",
-    palette = c("#00AFBB", "#E7B800"),
-    alpha = .5,
-    linetype = "solid",
-    trim = TRUE,
-    width = 1,
-    add = c("boxplot", "jitter"),
+    MLM_data, # data
+    x = "condition", # independent variable
+    y = "value", # dependent variable
+    color = "condition", # density: line color
+    size = 1, # density: line width
+    fill = "condition", # density: fill color
+    alpha = .5, # density: fill color transparency
+    linetype = "solid", # density: line type
+    palette = c("#00AFBB", "#E7B800"), # density: color palette
+    trim = TRUE, # density: trim tails
+    width = 1, # density: violin width
+    add = c("boxplot", "jitter"), # overlay boxplot and jittered individual data points
     add.params = list(
-      color = "black",
-      fill = "white",
-      alpha = .2
+      color = "black", # boxplot and jittered points: color
+      fill = "white",# boxplot and jittered points: fill color
+      alpha = .2# boxplot and jittered points: fill transparency
     ),
-    title = "Multilevel Model",
-    xlab = "Condition",
-    ylab = "Value",
-    label.rectangle = TRUE,
-    ggtheme = theme_custom
+    title = "Multilevel Model", # plot title
+    label.rectangle = TRUE, # rectangle underneath text
+    ggtheme = theme_custom # ggplot theme
   )
 
 ggsave(
@@ -774,3 +765,5 @@ MLM_plot
 
 ***
 ***
+
+[^1]: Adapted from the book [**Answering questions with data**](https://crumplab.github.io/statistics/index.html) (Chapter [11](https://crumplab.github.io/statistics/simulating-data.html#reasons-to-simulate)) by Matthew J. C. Crump.
