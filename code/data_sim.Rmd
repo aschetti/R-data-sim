@@ -15,9 +15,6 @@ editor_options:
 
 ```{r doc-setup, include = FALSE}
 
-seed_smorfia <- 17 # 'A disgrazia!
-set.seed(seed_smorfia) # seed for random number generation
-
 # ### install packages
 # install.packages("here")
 # install.packages("knitr")
@@ -49,19 +46,6 @@ opts_chunk$set(
   fig.dim = c(8, 8) # figure width & height
 )
 
-# ggplot custom theme
-theme_custom <-
-  theme_pubr(base_size = 16) +
-  theme(
-    strip.text = element_text(
-      hjust = .5,
-      size = 20
-    ),
-    plot.title = element_text(size = 26, hjust = .5),
-    legend.box.background = element_rect(color = "transparent"),
-    legend.position = "none"
-  )
-
 ```
 
 ***
@@ -90,67 +74,154 @@ Here are some reasons[^1]:
   - is your statistical model computationally feasible?
   - if the results of the power analysis require a large number of participants and/or trials, do you have enough time and/or resources?
 
+# Preparation
+
+Make sure you have [R](https://cran.r-project.org/) and [Rstudio](https://rstudio.com/products/rstudio/download/) installed on your computer and fully functional.
+
+Next, install and load the following R packages:
+
+  - [`here`](https://github.com/r-lib/here), which easily builds folder paths to load and save files
+  - [`knitr`](https://github.com/yihui/knitr) and [`kableExtra`](https://github.com/haozhu233/kableExtra), to format the dynamically generated document
+  - [`tidyverse`](https://github.com/tidyverse/tidyverse) and [`ggpubr`](https://github.com/kassambara/ggpubr), for data wrangling and plots
+  - [`faux`](https://github.com/debruine/faux/), to simulate the data
+  - [`rstatix`](https://github.com/kassambara/rstatix) and [`lme4`](https://github.com/lme4/lme4), for statistical analysis
+  - [`broom.mixed`](https://github.com/bbolker/broom.mixed), for easier extraction of the results of the multilevel model
+
+```{r install-load-pkgs, eval = FALSE}
+
+### install packages
+install.packages("here")
+install.packages("knitr")
+install.packages("kableExtra")
+install.packages("tidyverse")
+install.packages("faux")
+install.packages("rstatix")
+install.packages("lme4")
+install.packages("broom.mixed")
+install.packages("ggpubr")
+
+### load packages
+library(here)
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(faux)
+library(rstatix)
+library(lme4)
+library(broom.mixed)
+library(ggpubr)
+
+```
+
+Let's also create a custom `ggplot` theme for our graphs:
+
+```{r ggplot-theme}
+
+theme_custom <-
+  theme_pubr(base_size = 16) +
+  theme(
+    strip.text = element_text(
+      hjust = .5,
+      size = 20
+    ),
+    plot.title = element_text(size = 26, hjust = .5),
+    legend.box.background = element_rect(color = "transparent"),
+    legend.position = "none"
+  )
+
+```
+
+Last but not least, we need to set the seed for the random number generator. This is very important, because we want to be able to exactly reproduce the data we simulate.
+
+```{r seed-rng}
+
+seed_smorfia <- 17 # 'A disgrazia!
+set.seed(seed_smorfia) # set RNG seed
+
+```
+
+Now that we have everything, let's start.
+
 # How to simulate data in R
 
-There are many ways to simulate data in R. The easiest way is to use base R functions. Here we use `rnorm` to generate 1000 random samples from a normal distribution with mean = 0 and standard deviation = 1:
+There are many ways to simulate data in R. The easiest way is to use base R functions. Here we use `rnorm` to generate 1000 random samples from a normal distribution with $\mu$ = 0 and $\sigma$ = 1:
 
 ```{r rnorm-data}
 
 rnorm_data <- rnorm(1000, mean = 0, sd = 1)
 
-# show first 10 samples
-head(rnorm_data, 10) 
+```
+
+Let's look at the first 10 samples:
+
+```{r rnorm-show}
+
+rnorm_data %>% 
+  head(10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
+
+Let's plot the simulated data. We expect the majority of generated samples to be clustered around 0 (because `mean = 0`), but a few samples can still be larger or smaller than the mean.
 
 ```{r rnorm-plot}
 
 rnorm_data %>%
   as_tibble() %>%
-  ggplot(aes(x = value)) +
-    geom_histogram(
-    bins = 50,
-    color = "black",
-    fill = "#00AFBB"
-  ) +
-  ggtitle("Normal distribution") +
-  theme_custom
+  ggviolin(
+    y = "value", # dependent variable
+    color = "#00AFBB", # density: line color
+    size = 1, # density: line width
+    fill = "#00AFBB", # density: fill color
+    alpha = .5, # density: fill color transparency
+    linetype = "solid", # density: line type
+    trim = TRUE, # density: trim tails
+    width = 1, # density: violin width
+    add = c("boxplot", "jitter"), # overlay boxplot and jittered individual data points
+    add.params = list(
+      color = "black", # boxplot and jittered points: color
+      fill = "white",# boxplot and jittered points: fill color
+      alpha = .2# boxplot and jittered points: fill transparency
+    ),
+    title = "Normal distribution", # plot title
+    xlab = "", # x-axis: title 
+    label.rectangle = TRUE, # rectangle underneath text
+    ggtheme = theme_custom # ggplot theme
+  )
 
 ```
 
 Other functions allow you to sample from different distributions, e.g., uniform (`runif`), binomial (`rbinom`), Student's t (`rt`), and more (for a complete list, type `?distributions` in the console).
 
-However, in this workshop we will be using the package `faux`, created by [Prof. Lisa DeBruine](https://www.gla.ac.uk/researchinstitutes/neurosciencepsychology/staff/lisadebruine/). 
+However, in this workshop we will be using the package `faux`, created by [Prof. Lisa DeBruine](https://www.gla.ac.uk/researchinstitutes/neurosciencepsychology/staff/lisadebruine/). Personally, I like this package very much: despite being quite recent, it is actively maintained and well-documented, and its framework is user-friendly and adaptable to several popular study designs in the social sciences.
 
+The first study design we will simulate is a one-sample t-test.
 
+## One-sample t-test
 
+Imagine we plan to ask a group of 50 participants to complete an online test. Based on published literature and/or our own data collected as part of previous projects, we expect the test scores to follow a normal distribution with $\mu$ = 2 and $\sigma$ = 1. First, let's create the variables that represent this *a priori* information:
 
-**WHY?**
+```{r ttest-onesample-params}
 
+ttest_onesample_label <- list(condition = c("test")) # name of data column
+ttest_onesample_n <- 50 # number of participants
+ttest_onesample_mu_cond <- 2 # mean
+ttest_onesample_sd_cond <- 1 # standard deviation
 
+```
 
-
-
-
-# One-sample t-test
-
-## Data Simulation
+Now we have all the parameters we need to generate (hypothetical) scores of this test, which will follow the distribution specified above. The relevant function in the `faux` package is `sim_design`:
 
 ```{r ttest-onesample-data}
-
-# parameters
-ttest_onesample_between <- list(condition = c("test")) # list of between-subject factors
-ttest_onesample_n <- 50 # number of participants
-ttest_onesample_mu_cond <- 1 # means
-ttest_onesample_sd_cond <- 1 # standard deviations
 
 # data simulation
 ttest_onesample_data <-
   sim_design(
-    between = ttest_onesample_between,
-    n = ttest_onesample_n,
-    mu = ttest_onesample_mu_cond,
-    sd = ttest_onesample_sd_cond,
+    between = ttest_onesample_label, # the data come from one independent group, that's why it's "between-subject"
+    n = ttest_onesample_n, # number of participants
+    mu = ttest_onesample_mu_cond, # mean
+    sd = ttest_onesample_sd_cond, # standard deviation
     empirical = FALSE, # exact mean/SD?
     long = TRUE, # results in long format
     dv = list(value = "value"), # name of dependent variables
@@ -160,13 +231,12 @@ ttest_onesample_data <-
   ) %>%
   as_tibble()
 
-# save as .csv
-write_csv(
-  ttest_onesample_data,
-  here("data/ttest_onesample_data.csv")
-)
+```
 
-# show first 10 rows
+Let's look at the first 10 rows of the simulated dataset:
+
+```{r ttest-onesample-data-show}
+
 ttest_onesample_data %>%
   head(n = 10) %>%
   kable() %>%
@@ -174,30 +244,18 @@ ttest_onesample_data %>%
 
 ```
 
-## Statistical Analysis
+Save the data as *.csv* file:
 
-```{r ttest-onesample-test}
+```{r ttest-onesample-data-save}
 
-ttest_onesample_results <-
-  t_test(
-    data = ttest_onesample_data, # data
-    formula = value ~ 1, # formula
-    p.adjust.method = "holm", # p-value adjustment
-    paired = FALSE, # paired test?
-    var.equal = FALSE, # assume equal variance?
-    alternative = "two.sided", # alternative hypothesis (two-sided, larger than mu, smaller than mu)
-    mu = 0, # null value
-    conf.level = .95, # width confidence intervals
-    detailed = FALSE
-  )
-
-ttest_onesample_results %>%
-  kable(digits = 12) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+write_csv(
+  ttest_onesample_data,
+  here("data", "ttest_onesample_data.csv")
+)
 
 ```
 
-## Graph
+Plot using the `plot_design` function in `faux`:
 
 ```{r ttest-onesample-plot}
 
@@ -208,7 +266,15 @@ ttest_onesample_plot <-
   ggtitle("One-sample t-test") +
   theme_custom
 
-ggsave( # save to file
+ttest_onesample_plot
+
+```
+
+Save the plot as *.png* file:
+
+```{r ttest-onesample-plot-save}
+
+ggsave(
   filename = "ttest_onesample_plot.png",
   plot = ttest_onesample_plot,
   device = "png",
@@ -219,13 +285,54 @@ ggsave( # save to file
   dpi = 300
 )
 
-ttest_onesample_plot
+```
+
+### Statistical Analysis
+
+Our research hypothesis is that the test scores will be significantly larger than 0. We can test this hypothesis in several ways, but we keep it simple and run a one-sample Students' t-test against $\mu$ = 0:
+
+```{r ttest-onesample-test}
+
+ttest_onesample_results <-
+  t_test(
+    data = ttest_onesample_data, # data
+    formula = value ~ 1, # formula
+    p.adjust.method = "holm", # p-value adjustment
+    paired = FALSE, # paired test?
+    var.equal = TRUE, # assume equal variance?
+    alternative = "greater", # alternative hypothesis (two-sided, larger than mu, smaller than mu)
+    mu = 0, # null value
+    conf.level = .95, # width confidence intervals
+    detailed = FALSE
+  )
+
+# see the results
+ttest_onesample_results %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
-# Between-subject t-test
 
-## Data Simulation
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Between-subject t-test
+
+### Data Simulation
 
 ```{r ttest-between-data}
 
@@ -265,7 +372,7 @@ ttest_between_data %>%
 
 ```
 
-## Statistical Analysis
+### Statistical Analysis
 
 ```{r ttest-between-test}
 
@@ -288,7 +395,7 @@ ttest_between_results %>%
 
 ```
 
-## Graph
+### Graph
 
 ```{r ttest-between-plot}
 
@@ -313,9 +420,9 @@ ttest_between_plot
 
 ```
 
-# Within-subject t-test
+## Within-subject t-test
 
-## Data Simulation
+### Data Simulation
 
 ```{r ttest-within-data}
 
@@ -357,7 +464,7 @@ ttest_within_data %>%
 
 ```
 
-## Statistical Analysis
+### Statistical Analysis
 
 ```{r ttest-within-test}
 
@@ -380,7 +487,7 @@ ttest_within_results %>%
 
 ```
 
-## Graph
+### Graph
 
 ```{r ttest-within-plot}
 
@@ -405,9 +512,9 @@ ttest_within_plot
 
 ```
 
-# 2 x 3 mixed ANOVA
+## 2 x 3 mixed ANOVA
 
-## Data Simulation
+### Data Simulation
 
 ```{r ANOVA-data}
 
@@ -470,7 +577,7 @@ ANOVA_data %>%
 
 ```
 
-## Statistical Analysis
+### Statistical Analysis
 
 ```{r ANOVA-test}
 
@@ -552,7 +659,7 @@ ANOVA_pairwise_condition
 
 ```
 
-## Graph
+### Graph
 
 ```{r ANOVA-plot}
 
@@ -578,9 +685,9 @@ ANOVA_plot
 
 ```
 
-# Multilevel Model
+## Multilevel Model
 
-## Data Simulation
+### Data Simulation
 
 From https://debruine.github.io/lmem_sim/articles/appendix1a_example_code.html
 
@@ -603,7 +710,6 @@ MLM_cor_int_slope <- .2 # correlation between intercept and slope [rho]
 MLM_error_sd <- 200 # residual (standard deviation) [sigma]
 
 ```
-
 
 ```{r MLM-data-fun}
 
@@ -667,7 +773,7 @@ MLM_data %>%
 
 ```
 
-## Statistical Analysis
+### Statistical Analysis
 
 ```{r MLM-test}
 
@@ -711,7 +817,7 @@ tibble(
 
 ```
 
-## Graph
+### Graph
 
 ```{r MLM-plot}
 
@@ -751,6 +857,19 @@ ggsave(
 )
 
 MLM_plot
+
+```
+
+# Generate data from existing dataset
+
+
+
+
+# Session Info
+
+```{r session-info}
+
+sessionInfo()
 
 ```
 
