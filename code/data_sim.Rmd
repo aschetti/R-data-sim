@@ -15,6 +15,9 @@ editor_options:
 
 ```{r doc-setup, include = FALSE}
 
+seed_smorfia <- 17 # 'A disgrazia!
+set.seed(seed_smorfia) # set RNG seed
+
 # ### install packages
 # install.packages("here")
 # install.packages("knitr")
@@ -38,7 +41,7 @@ library(broom.mixed)
 library(ggpubr)
 
 # for RMarkdown
-# options(digits = 2) # number of decimal digits
+options(digits = 2) # number of decimal digits
 opts_chunk$set(
   echo = TRUE, # show code
   warning = FALSE, # no package warnings
@@ -76,10 +79,11 @@ Here are some reasons[^1]:
 
 # Preparation
 
-Make sure you have [R](https://cran.r-project.org/) and [Rstudio](https://rstudio.com/products/rstudio/download/) installed on your computer and fully functional.
+In preparation for this meeting, you should have installed on your computer:
 
-Next, install and load the following R packages:
-
+- [R](https://cran.r-project.org/)
+- [Rstudio](https://rstudio.com/products/rstudio/download/)
+- R packages:
   - [`here`](https://github.com/r-lib/here), which easily builds folder paths to load and save files
   - [`knitr`](https://github.com/yihui/knitr) and [`kableExtra`](https://github.com/haozhu233/kableExtra), to format the dynamically generated document
   - [`tidyverse`](https://github.com/tidyverse/tidyverse) and [`ggpubr`](https://github.com/kassambara/ggpubr), for data wrangling and plots
@@ -118,7 +122,7 @@ Let's also create a custom `ggplot` theme for our graphs:
 ```{r ggplot-theme}
 
 theme_custom <-
-  theme_pubr(base_size = 16) +
+  theme_pubr(base_size = 16) + # base theme from package 'ggpubr'
   theme(
     strip.text = element_text(
       hjust = .5,
@@ -133,7 +137,7 @@ theme_custom <-
 
 Last but not least, we need to set the seed for the random number generator. This is very important, because we want to be able to exactly reproduce the data we simulate.
 
-```{r seed-rng}
+```{r seed-rng, eval = FALSE}
 
 seed_smorfia <- 17 # 'A disgrazia!
 set.seed(seed_smorfia) # set RNG seed
@@ -144,7 +148,7 @@ Now that we have everything, let's start.
 
 # How to simulate data in R
 
-There are many ways to simulate data in R. The easiest way is to use base R functions. Here we use `rnorm` to generate 1000 random samples from a normal distribution with $\mu$ = 0 and $\sigma$ = 1:
+There are several ways to simulate data in R. One way is to use base R functions. Here we use `rnorm` to generate 1000 random samples from a normal distribution with $\mu$ = 0 and $\sigma$ = 1:
 
 ```{r rnorm-data}
 
@@ -158,18 +162,18 @@ Let's look at the first 10 samples:
 
 rnorm_data %>% 
   head(10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable() %>% # create a fancy table
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) # make it even fancier, thanks to pacakge 'kableExtra'
 
 ```
 
-Let's plot the simulated data. We expect the majority of generated samples to be clustered around 0 (because `mean = 0`), but a few samples can still be larger or smaller than the mean.
+Let's plot the simulated data. We expect a bell-shaped distribution with the majority of generated samples clustered around 0 (because `mean = 0`), although a few samples can still be larger or smaller than the mean.
 
 ```{r rnorm-plot}
 
 rnorm_data %>%
   as_tibble() %>%
-  ggviolin(
+  ggviolin( # from package 'ggpubr'
     y = "value", # dependent variable
     color = "#00AFBB", # density: line color
     size = 1, # density: line width
@@ -194,7 +198,7 @@ rnorm_data %>%
 
 Other functions allow you to sample from different distributions, e.g., uniform (`runif`), binomial (`rbinom`), Student's t (`rt`), and more (for a complete list, type `?distributions` in the console).
 
-However, in this workshop we will be using the package `faux`, created by [Prof. Lisa DeBruine](https://www.gla.ac.uk/researchinstitutes/neurosciencepsychology/staff/lisadebruine/). Personally, I like this package very much: despite being quite recent, it is actively maintained and well-documented, and its framework is user-friendly and adaptable to several popular study designs in the social sciences.
+However, in this workshop we will be using the package `faux`, created by [Prof. Lisa DeBruine](https://www.gla.ac.uk/researchinstitutes/neurosciencepsychology/staff/lisadebruine/). Despite being quite recent, this package is actively maintained and well-documented, and its framework is user-friendly and adaptable to several popular study designs in the social sciences.
 
 The first study design we will simulate is a one-sample t-test.
 
@@ -211,7 +215,7 @@ ttest_onesample_sd_cond <- 1 # standard deviation
 
 ```
 
-Now we have all the parameters we need to generate (hypothetical) scores of this test, which will follow the distribution specified above. The relevant function in the `faux` package is `sim_design`:
+Now we have all the parameters we need to generate (hypothetical) scores of this test from a normal distribution with the parameters specified above. The relevant function in the `faux` package is `sim_design`:
 
 ```{r ttest-onesample-data}
 
@@ -223,7 +227,7 @@ ttest_onesample_data <-
     mu = ttest_onesample_mu_cond, # mean
     sd = ttest_onesample_sd_cond, # standard deviation
     empirical = FALSE, # exact mean/SD?
-    long = TRUE, # results in long format
+    long = TRUE, # results in long format?
     dv = list(value = "value"), # name of dependent variables
     id = list(id = "id"), # name of ID column
     plot = FALSE, # plot?
@@ -262,7 +266,6 @@ Plot using the `plot_design` function in `faux`:
 ttest_onesample_plot <-
   ttest_onesample_data %>%
   plot_design(geoms = c("box", "violin", "jitter")) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "#440154FF", size = 1.2) +
   ggtitle("One-sample t-test") +
   theme_custom
 
@@ -287,9 +290,29 @@ ggsave(
 
 ```
 
+### Parameter recovery
+
+How can we be sure that `faux` correctly sampled from a normal distribution with $\mu$ = 2 and $\sigma$ = 1? The mean and standard deviation of the simulated dataset should be close to what we imputed (although not the same, because of the probabilistic nature of the sampling). Let's verify[^2]:
+
+```{r ttest-onesample-param-recovery}
+
+ttest_onesample_param_recovery <-
+  ttest_onesample_data %>%
+  get_summary_stats(
+    type = "mean_sd"
+  )
+
+ttest_onesample_param_recovery %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+```
+
+It seems that `faux` did its job well: the mean of the simulated dataset is `r ttest_onesample_param_recovery$mean` and its standard deviation is `r ttest_onesample_param_recovery$sd`.
+
 ### Statistical Analysis
 
-Our research hypothesis is that the test scores will be significantly larger than 0. We can test this hypothesis in several ways, but we keep it simple and run a one-sample Students' t-test against $\mu$ = 0:
+Our research hypothesis is that the test scores will be significantly larger than 0. We can test this hypothesis in several ways, but we keep it simple and run a one-tailed one-sample Student's t-test against $\mu$ = 0 using the `t_test` function from the package `rstatix`:
 
 ```{r ttest-onesample-test}
 
@@ -313,13 +336,7 @@ ttest_onesample_results %>%
 
 ```
 
-
-
-
-
-
-
-
+Results indicate that the mean test score is significantly larger than 0: *t*(`r ttest_onesample_results$df`) = `r ttest_onesample_results$statistic`, *p* = `r format(ttest_onesample_results$p, digits = 3)`.
 
 
 
@@ -863,6 +880,9 @@ MLM_plot
 # Generate data from existing dataset
 
 
+# Limitations
+
+`faux` only generates  samples from normal distributions
 
 
 # Session Info
@@ -877,3 +897,4 @@ sessionInfo()
 ***
 
 [^1]: Adapted from the book [**Answering questions with data**](https://crumplab.github.io/statistics/index.html) (Chapter [11](https://crumplab.github.io/statistics/simulating-data.html#reasons-to-simulate)) by Matthew J. C. Crump.
+[^2]: I recommend exploring the function `get_summary_stats` from package `rstatix`, especially the argument `type`... it's very comprehensive.
