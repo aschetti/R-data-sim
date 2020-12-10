@@ -41,7 +41,7 @@ library(broom.mixed)
 library(ggpubr)
 
 # for RMarkdown
-options(digits = 2) # number of decimal digits
+# options(digits = 2) # number of decimal digits
 opts_chunk$set(
   echo = TRUE, # show code
   warning = FALSE, # no package warnings
@@ -163,7 +163,7 @@ Let's look at the first 10 samples:
 rnorm_data %>% 
   head(10) %>%
   kable() %>% # create a fancy table
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) # make it even fancier, thanks to pacakge 'kableExtra'
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) # make it even fancier, thanks to package 'kableExtra'
 
 ```
 
@@ -208,7 +208,7 @@ Imagine we plan to ask a group of 50 participants to complete an online test. Ba
 
 ```{r ttest-onesample-params}
 
-ttest_onesample_label <- list(condition = c("test")) # name of data column
+ttest_onesample_label <- list(condition = c("test")) # condition name
 ttest_onesample_n <- 50 # number of participants
 ttest_onesample_mu_cond <- 2 # mean
 ttest_onesample_sd_cond <- 1 # standard deviation
@@ -292,7 +292,7 @@ ggsave(
 
 ### Parameter recovery
 
-How can we be sure that `faux` correctly sampled from a normal distribution with $\mu$ = 2 and $\sigma$ = 1? The mean and standard deviation of the simulated dataset should be close to what we imputed (although not the same, because of the probabilistic nature of the sampling). Let's verify[^2]:
+How can we be sure that `faux` correctly sampled from a normal distribution with $\mu$ = 2 and $\sigma$ = 1? The mean and standard deviation of the simulated dataset should be close to what we imputed. They would not be *exactly* the same (because of the probabilistic nature of the sampling), unless you set `empirical = FALSE` when using `sim_design` . Let's verify:
 
 ```{r ttest-onesample-param-recovery}
 
@@ -300,19 +300,24 @@ ttest_onesample_param_recovery <-
   ttest_onesample_data %>%
   get_summary_stats(
     type = "mean_sd"
-  )
+  ) %>% 
+  mutate(
+    mean_imputed = ttest_onesample_mu_cond,
+    sd_imputed = ttest_onesample_sd_cond
+    ) %>% 
+  select(variable, n, mean, mean_imputed, sd, sd_imputed)
 
 ttest_onesample_param_recovery %>%
-  kable() %>%
+  kable(digits = 2) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
-It seems that `faux` did its job well: the mean of the simulated dataset is `r ttest_onesample_param_recovery$mean` and its standard deviation is `r ttest_onesample_param_recovery$sd`.
+It seems that `faux` did its job well: the mean of the simulated dataset is `r ttest_onesample_param_recovery$mean` and its standard deviation is `r ttest_onesample_param_recovery$sd`[^2].
 
 ### Statistical Analysis
 
-Our research hypothesis is that the test scores will be significantly larger than 0. We can test this hypothesis in several ways, but we keep it simple and run a one-tailed one-sample Student's t-test against $\mu$ = 0 using the `t_test` function from the package `rstatix`:
+Our research hypothesis is that the test scores will be statistically larger than 0. We can test this hypothesis in several ways, but we keep it simple and run a one-tailed one-sample Student's t-test against $\mu$ = 0 using the `t_test` function from the package `rstatix`:
 
 ```{r ttest-onesample-test}
 
@@ -331,38 +336,38 @@ ttest_onesample_results <-
 
 # see the results
 ttest_onesample_results %>%
-  kable() %>%
+  kable(digits = 2) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
 Results indicate that the mean test score is significantly larger than 0: *t*(`r ttest_onesample_results$df`) = `r ttest_onesample_results$statistic`, *p* = `r format(ttest_onesample_results$p, digits = 3)`.
 
-
-
-
-
-
-
-
-
-
 ## Between-subject t-test
 
-### Data Simulation
+Imagine we wish to study the effect of a specific drug vs. placebo on the test scores above. We recruit a total of 90 participants: 40 will be administered the drug, and 50 the placebo. Based on published literature and/or our own data collected as part of previous projects, we expect the test scores to follow:
+
+- a normal distribution with $\mu$ = 1 and $\sigma$ = 1 in the **placebo** group
+- a normal distribution with $\mu$ = 2 and $\sigma$ = 1.4 in the **drug** group
+
+Let's create the variables that represent this *a priori* information. `faux` works with lists, which means that, for each parameter, we will need to create one list per group: 
+
+```{r ttest-between-params}
+
+ttest_between_label <- list(treatment = c("placebo", "drug")) # condition names
+ttest_between_n <- list(placebo = 50, drug = 40) # number of observations per group
+ttest_between_mu_cond <- list(placebo = 1, drug = 2) # means per group
+ttest_between_sd_cond <- list(placebo = 1, drug = 1.4) # standard deviations per group
+
+```
+
+Simulate data using `sim_design`:
 
 ```{r ttest-between-data}
 
-# parameters
-ttest_between_between <- list(treatment = c("control", "drug"))
-ttest_between_n <- list(control = 50, drug = 40)
-ttest_between_mu_cond <- list(control = 1, drug = 2)
-ttest_between_sd_cond <- list(control = 1, drug = 1.4)
-
-# data simulation
 ttest_between_data <-
   sim_design(
-    between = ttest_between_between,
+    between = ttest_between_label,
     n = ttest_between_n,
     mu = ttest_between_mu_cond,
     sd = ttest_between_sd_cond,
@@ -375,13 +380,12 @@ ttest_between_data <-
   ) %>%
   as_tibble()
 
-# save as .csv
-write_csv(
-  ttest_between_data,
-  here("data/ttest_between_data.csv")
-)
+```
 
-# show first 10 rows
+Look at the first 10 rows of the simulated dataset:
+
+```{r ttest-between-data-show}
+
 ttest_between_data %>%
   head(n = 10) %>%
   kable() %>%
@@ -389,30 +393,18 @@ ttest_between_data %>%
 
 ```
 
-### Statistical Analysis
+Save the data as *.csv* file:
 
-```{r ttest-between-test}
+```{r ttest-between-data-save}
 
-ttest_between_results <-
-  t_test(
-    data = ttest_between_data,
-    formula = value ~ treatment,
-    p.adjust.method = "holm",
-    paired = FALSE,
-    var.equal = FALSE,
-    alternative = "two.sided",
-    mu = 0,
-    conf.level = .95,
-    detailed = FALSE
-  )
-
-ttest_between_results %>%
-  kable(digits = 12) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+write_csv(
+  ttest_between_data,
+  here("data", "ttest_between_data.csv")
+)
 
 ```
 
-### Graph
+Plot using the `plot_design` function in `faux`:
 
 ```{r ttest-between-plot}
 
@@ -421,6 +413,14 @@ ttest_between_plot <-
   plot_design(geoms = c("box", "violin", "jitter")) +
   ggtitle("Between-subject t-test") +
   theme_custom
+
+ttest_between_plot
+
+```
+
+Save the plot as *.png* file:
+
+```{r ttest-between-plot-save}
 
 ggsave(
   filename = "ttest_between_plot.png",
@@ -433,9 +433,83 @@ ggsave(
   dpi = 300
 )
 
-ttest_between_plot
+```
+
+### Parameter recovery
+
+Verify that `faux` correctly sampled from the two normal distributions indicated above:
+
+```{r ttest-between-param-recovery}
+
+ttest_between_param_recovery <-
+  ttest_between_data %>%
+  group_by(treatment) %>% 
+  get_summary_stats(
+    type = "mean_sd"
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    mean_imputed = map_chr(ttest_between_mu_cond, toString),
+    sd_imputed = map_chr(ttest_between_sd_cond, toString)
+  ) %>% 
+  select(variable, treatment, n, mean, mean_imputed, sd, sd_imputed)
+
+ttest_between_param_recovery %>%
+  kable(digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
+
+Looks reasonable.
+
+### Statistical Analysis
+
+Our research hypothesis is that the test scores will be statistically smaller in the `placebo` compared to the `drug` condition. Let's run a one-tailed independent-sample Student's t-test using the `t_test` function:
+
+```{r ttest-between-test}
+
+ttest_between_results <-
+  t_test(
+    data = ttest_between_data,
+    formula = value ~ treatment,
+    p.adjust.method = "holm",
+    paired = FALSE,
+    var.equal = FALSE,
+    alternative = "less",
+    mu = 0,
+    conf.level = .95,
+    detailed = FALSE
+  )
+
+ttest_between_results %>%
+  kable(digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+```
+
+Results indicate that the mean test score is significantly smaller in the `placebo` compared to the `drug` condition: *t*(`r format(ttest_between_results$df, digits = 4)`) = `r format(ttest_between_results$statistic, digits = 3)`, *p* = `r format(ttest_between_results$p, digits = 3)`.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Within-subject t-test
 
@@ -706,7 +780,14 @@ ANOVA_plot
 
 ### Data Simulation
 
+`sim_mixed_cc` would not allow you to specify random slopes
+
+
 From https://debruine.github.io/lmem_sim/articles/appendix1a_example_code.html
+
+
+
+
 
 ```{r MLM-params}
 
@@ -880,9 +961,34 @@ MLM_plot
 # Generate data from existing dataset
 
 
+
+
+
 # Limitations
 
-`faux` only generates  samples from normal distributions
+`faux` only generates samples from normal distributions
+better solution: `synthpop`
+
+
+
+
+# Other simulation packages
+
+https://debruine.github.io/faux/index.html
+
+I started this project as a collection of functions I was writing to help with my own work. It’s one of many, many simulation packages in R; here are some others. I haven’t used most of them, so I can’t vouch for them, but if faux doesn’t meet your needs, one of these might.
+
+- simstudy: Simulation of Study Data
+- simr: Power Analysis of Generalised Linear Mixed Models by Simulation
+- simulator: streamlines the process of performing simulations by creating a common infrastructure that can be easily used and reused across projects
+- lsasim: Simulate large scale assessment data
+- simmer: Trajectory-based Discrete-Event Simulation (DES)
+- parSim: Parallel Simulation Studies
+
+
+
+
+
 
 
 # Session Info
