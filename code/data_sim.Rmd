@@ -613,7 +613,7 @@ Looks ok.
 
 ### Statistical Analysis
 
-Our research hypothesis is that the test scores will be statistically larger after exposure to the emotional relative to neutral pictures. Let's run a one-tailed paired-sample Student's t-test:
+Our research hypothesis is that the test scores will be statistically smaller after exposure to the neutral relative to emotional pictures. Let's run a one-tailed paired-sample Student's t-test:
 
 ```{r ttest-within-test}
 
@@ -767,19 +767,6 @@ Verify that `faux` correctly sampled from the normal distributions indicated abo
 
 ```{r ANOVA-param-recovery}
 
-
-############################################
-# FROM HERE
-############################################
-
-
-
-
-
-
-
-
-
 ANOVA_param_recovery <-
   ANOVA_data %>%
   group_by(treatment, condition) %>% 
@@ -788,107 +775,26 @@ ANOVA_param_recovery <-
   ) %>% 
   ungroup() %>% 
   mutate(
-    mean_imputed = map_chr(ANOVA_within, toString),
-    sd_imputed = map_chr(ttest_within_sd_cond, toString)
+    mean_imputed = c(map_chr(ANOVA_mu_cond$control, toString), map_chr(ANOVA_mu_cond$drug, toString)),
+    sd_imputed = c(map_chr(ANOVA_sd_cond$control, toString), map_chr(ANOVA_sd_cond$drug, toString))
   ) %>% 
   select(variable, condition, n, mean, mean_imputed, sd, sd_imputed)
 
-ttest_within_param_recovery %>%
+ANOVA_param_recovery %>%
   kable(digits = 2) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
-
-
-
-
-
-
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## 2 x 3 mixed ANOVA
-
-### Data Simulation
-
-```{r ANOVA-data}
-
-# parameters
-ANOVA_within <- list(condition = c("neutral", "unpleasant", "pleasant"))
-ANOVA_between <- list(treatment = c("control", "drug"))
-ANOVA_n <- list(
-  control = c(neutral = 50, unpleasant = 50, pleasant = 50), # number of participants must be the same for each condition...
-  drug = c(neutral = 30, unpleasant = 30, pleasant = 30) # ... but can be different between groups
-)
-ANOVA_mu_cond <- list(
-  control = c(neutral = 1, unpleasant = 1.5, pleasant = 1.4),
-  drug = c(neutral = 1.1, unpleasant = 1.4, pleasant = 2.1)
-)
-ANOVA_sd_cond <- list(
-  control = c(neutral = 1, unpleasant = 1.2, pleasant = 1.2),
-  drug = c(neutral = 1.2, unpleasant = 1.5, pleasant = 1.6)
-)
-
-ANOVA_r <- list( # if the design has more than 2 within-subject conditions, specify each correlation in the upper right triangle of the correlation matrix as a vector (https://debruine.github.io/faux/articles/sim_design.html#correlations-1)
-  control = c(
-    .40, .50,
-    .60
-  ),
-  drug = c(
-    .15, .25,
-    .45
-  )
-)
-
-# data simulation
-ANOVA_data <-
-  sim_design(
-    within = ANOVA_within,
-    between = ANOVA_between,
-    n = ANOVA_n,
-    mu = ANOVA_mu_cond,
-    sd = ANOVA_sd_cond,
-    r = ANOVA_r,
-    empirical = FALSE,
-    long = TRUE,
-    dv = list(value = "value"),
-    id = list(id = "id"),
-    plot = FALSE,
-    rep = 1
-  ) %>%
-  as_tibble()
-
-# save as .csv
-write_csv(
-  ANOVA_data,
-  here("data/ANOVA_data.csv")
-)
-
-# show first 10 rows
-ANOVA_data %>%
-  head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
-```
+Looks ok.
 
 ### Statistical Analysis
 
-```{r ANOVA-test}
+Let's run a mixed ANOVA on the simulated data. First, the omnibus test:
 
-ANOVA_results <-
+```{r ANOVA-test-omnibus}
+
+ANOVA_omnibus <-
   anova_test(
     data = ANOVA_data,
     dv = value,
@@ -902,23 +808,16 @@ ANOVA_results <-
   get_anova_table() %>%
   adjust_pvalue(method = "holm")
 
-ANOVA_results
+ANOVA_omnibus
 
-# treatment, main effect
-ANOVA_main_treatment <-
-  ANOVA_data %>%
-  group_by(condition) %>%
-  anova_test(
-    dv = value,
-    wid = id,
-    between = treatment
-  ) %>%
-  get_anova_table() %>%
-  adjust_pvalue(method = "holm")
+```
 
-ANOVA_main_treatment
+Results show a statistically significant main effect of `condition` (*F*(`r format(ANOVA_omnibus$DFn[2])`, `r format(ANOVA_omnibus$DFd[2])`) = `r format(ANOVA_omnibus$F[2])`, *p* = `r format(ANOVA_omnibus$p.adj[2])`, $\eta_{G}^{2}$ = `r format(ANOVA_omnibus$ges[2], digits = 3)`) and `treatment` x `condition` (*F*(`r format(ANOVA_omnibus$DFn[3])`, `r format(ANOVA_omnibus$DFd[3])`) = `r format(ANOVA_omnibus$F[3])`, *p* = `r format(ANOVA_omnibus$p.adj[3])`, $\eta_{G}^{2}$ = `r format(ANOVA_omnibus$ges[3], digits = 3)`).
 
-# treatment, pairwise comparisons
+Do the scores of our online test differ as a function of group?
+
+```{r ANOVA-test-treatment}
+
 ANOVA_pairwise_treatment <-
   ANOVA_data %>%
   group_by(condition) %>%
@@ -926,7 +825,7 @@ ANOVA_pairwise_treatment <-
     formula = value ~ treatment,
     p.adjust.method = "holm",
     paired = FALSE,
-    var.equal = FALSE,
+    var.equal = TRUE,
     alternative = "two.sided",
     mu = 0,
     conf.level = 0.95
@@ -934,21 +833,12 @@ ANOVA_pairwise_treatment <-
 
 ANOVA_pairwise_treatment
 
-# condition, main effect
-ANOVA_main_condition <-
-  ANOVA_data %>%
-  group_by(treatment) %>%
-  anova_test(
-    dv = value,
-    wid = id,
-    within = condition
-  ) %>%
-  get_anova_table() %>%
-  adjust_pvalue(method = "holm")
+```
 
-ANOVA_main_condition
+Pairwise comparisons suggest that test scores in the `drug` group are statistically larger than in the `control` group only in the `pleasant` condition: *t*(`r format(ANOVA_pairwise_treatment$df[3])`) = `r format(ANOVA_pairwise_treatment$statistic[3])`, *p* = `r format(ANOVA_pairwise_treatment$p[3])`.
 
-# condition, pairwise comparisons
+```{r ANOVA-test-conditio}
+
 ANOVA_pairwise_condition <-
   ANOVA_data %>%
   group_by(treatment) %>%
@@ -956,7 +846,7 @@ ANOVA_pairwise_condition <-
     formula = value ~ condition,
     p.adjust.method = "holm",
     paired = TRUE,
-    var.equal = FALSE,
+    var.equal = TRUE,
     alternative = "two.sided",
     mu = 0,
     conf.level = 0.95
@@ -966,31 +856,26 @@ ANOVA_pairwise_condition
 
 ```
 
-### Graph
+Within each group, differences among `condition` levels are only observed in the `drug` group, with statistically larger scores in the `pleasant` compared to the `neutral` condition: *t*(`r format(ANOVA_pairwise_condition$df[5])`) = `r format(ANOVA_pairwise_condition$statistic[5], digits = 3)`, *p* = `r format(ANOVA_pairwise_condition$p[5])`.
 
-```{r ANOVA-plot}
 
-ANOVA_plot <-
-  ANOVA_data %>%
-  plot_design(geoms = c("box", "violin", "jitter")) +
-  ggtitle("Mixed ANOVA") +
-  theme_custom +
-  theme(legend.position = "right")
 
-ggsave(
-  filename = "ANOVA_plot.png",
-  plot = ANOVA_plot,
-  device = "png",
-  path = here("figures"),
-  width = 8,
-  height = 8,
-  units = "in",
-  dpi = 300
-)
 
-ANOVA_plot
 
-```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Multilevel Model
 
