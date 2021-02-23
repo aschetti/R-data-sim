@@ -25,8 +25,6 @@ set.seed(seed_smorfia) # set RNG seed
 # install.packages("tidyverse")
 # install.packages("faux")
 # install.packages("rstatix")
-# install.packages("lme4")
-# install.packages("broom.mixed")
 # install.packages("ggpubr")
 
 ### load packages
@@ -36,8 +34,6 @@ library(kableExtra)
 library(tidyverse)
 library(faux)
 library(rstatix)
-library(lme4)
-library(broom.mixed)
 library(ggpubr)
 
 # for RMarkdown
@@ -88,8 +84,7 @@ In preparation for this meeting, you should have installed on your computer:
   - [`knitr`](https://github.com/yihui/knitr) and [`kableExtra`](https://github.com/haozhu233/kableExtra), to format the dynamically generated document
   - [`tidyverse`](https://github.com/tidyverse/tidyverse) and [`ggpubr`](https://github.com/kassambara/ggpubr), for data wrangling and plots
   - [`faux`](https://github.com/debruine/faux/), to simulate the data
-  - [`rstatix`](https://github.com/kassambara/rstatix) and [`lme4`](https://github.com/lme4/lme4), for statistical analysis
-  - [`broom.mixed`](https://github.com/bbolker/broom.mixed), for easier extraction of the results of the multilevel model
+  - [`rstatix`](https://github.com/kassambara/rstatix) for statistical analysis
 
 ```{r install-load-pkgs, eval = FALSE}
 
@@ -100,8 +95,6 @@ install.packages("kableExtra")
 install.packages("tidyverse")
 install.packages("faux")
 install.packages("rstatix")
-install.packages("lme4")
-install.packages("broom.mixed")
 install.packages("ggpubr")
 
 ### load packages
@@ -111,8 +104,6 @@ library(kableExtra)
 library(tidyverse)
 library(faux)
 library(rstatix)
-library(lme4)
-library(broom.mixed)
 library(ggpubr)
 
 ```
@@ -460,7 +451,7 @@ ttest_between_param_recovery %>%
 
 ```
 
-Looks reasonable.
+Looks ok.
 
 ### Statistical Analysis
 
@@ -814,8 +805,6 @@ ANOVA_omnibus
 
 Results show a statistically significant main effect of `condition` (*F*(`r format(ANOVA_omnibus$DFn[2])`, `r format(ANOVA_omnibus$DFd[2])`) = `r format(ANOVA_omnibus$F[2])`, *p* = `r format(ANOVA_omnibus$p.adj[2])`, $\eta_{G}^{2}$ = `r format(ANOVA_omnibus$ges[2], digits = 3)`) and `treatment` x `condition` (*F*(`r format(ANOVA_omnibus$DFn[3])`, `r format(ANOVA_omnibus$DFd[3])`) = `r format(ANOVA_omnibus$F[3])`, *p* = `r format(ANOVA_omnibus$p.adj[3])`, $\eta_{G}^{2}$ = `r format(ANOVA_omnibus$ges[3], digits = 3)`).
 
-Do the scores of our online test differ as a function of group?
-
 ```{r ANOVA-test-treatment}
 
 ANOVA_pairwise_treatment <-
@@ -858,6 +847,9 @@ ANOVA_pairwise_condition
 
 Within each group, differences among `condition` levels are only observed in the `drug` group, with statistically larger scores in the `pleasant` compared to the `neutral` condition: *t*(`r format(ANOVA_pairwise_condition$df[5])`) = `r format(ANOVA_pairwise_condition$statistic[5], digits = 3)`, *p* = `r format(ANOVA_pairwise_condition$p[5])`.
 
+## ADVANCED: Simulate data with crossed random factors
+
+Until now we have generated, for each participant, mean values for each condition. However, in real-life experiments we typically present participants with a number of trials per condition, and only later on we calculate the mean of these trial-level values. The `faux` package allows to simulate data with crossed random factors
 
 
 
@@ -872,192 +864,6 @@ Within each group, differences among `condition` levels are only observed in the
 
 
 
-
-
-
-
-
-## Multilevel Model
-
-### Data Simulation
-
-`sim_mixed_cc` would not allow you to specify random slopes
-
-
-From https://debruine.github.io/lmem_sim/articles/appendix1a_example_code.html
-
-
-
-
-
-```{r MLM-params}
-
-# parameters
-MLM_n_ssj <- 50 # number of participants
-# condition labels
-MLM_cat_cond1 <- "ingroup"
-MLM_cat_cond2 <- "outgroup"
-# number of items for each condition
-MLM_n_trials_cond1 <- 25
-MLM_n_trials_cond2 <- 25
-MLM_mu_grand <- 800 # grand mean [beta_0]
-MLM_cond_beta <- 50 # effect of condition [beta_1]
-MLM_item_sd <- 80 # by-item random intercept sd [omega_0]
-MLM_ssj_sd <- 100 # by-subject random intercept sd [tau_0]
-MLM_ssjslope_sd <- 40 # by-subject random slope sd [tau_1]
-MLM_cor_int_slope <- .2 # correlation between intercept and slope [rho]
-MLM_error_sd <- 200 # residual (standard deviation) [sigma]
-
-```
-
-```{r MLM-data-fun}
-
-# custom data simulation function
-MLM_data_fun <- function(
-                         n_subj = MLM_n_ssj, # number of subjects
-                         label_cond1 = MLM_cat_cond1, # label condition 1
-                         label_cond2 = MLM_cat_cond2, # label condition 2
-                         n_cond1 = MLM_n_trials_cond1, # number of stimuli condition 1
-                         n_cond2 = MLM_n_trials_cond2, # number of stimuli condition 2
-                         beta_0 = MLM_mu_grand, # grand mean
-                         beta_1 = MLM_cond_beta, # effect of category
-                         omega_0 = MLM_item_sd, # by-item random intercept sd
-                         tau_0 = MLM_ssj_sd, # by-subject random intercept sd
-                         tau_1 = MLM_ssjslope_sd, # by-subject random slope sd
-                         rho = MLM_cor_int_slope, # correlation between intercept and slope
-                         sigma = MLM_error_sd) { # residual (standard deviation)
-
-  # simulate a sample of items
-  items <- data.frame(
-    item_id = seq_len(n_cond1 + n_cond2),
-    condition = rep(c(label_cond1, label_cond2), c(n_cond1, n_cond2)),
-    X_i = rep(c(-0.5, 0.5), c(n_cond1, n_cond2)),
-    O_0i = rnorm(n = n_cond1 + n_cond2, mean = 0, sd = omega_0)
-  )
-
-  # simulate a sample of subjects
-  subjects <- faux::rnorm_multi(
-    n = n_subj, mu = 0, sd = c(tau_0, tau_1), r = rho,
-    varnames = c("T_0s", "T_1s")
-  )
-  subjects$subj_id <- 1:n_subj
-
-  # cross subject and item IDs
-  crossing(subjects, items) %>%
-    mutate(
-      e_si = rnorm(nrow(.), mean = 0, sd = sigma),
-      value = beta_0 + T_0s + O_0i + (beta_1 + T_1s) * X_i + e_si
-    ) %>%
-    select(subj_id, item_id, condition, X_i, value) %>%
-    arrange(subj_id)
-}
-
-```
-
-```{r MLM-data}
-
-MLM_data <- MLM_data_fun()
-
-# save as .csv
-write_csv(
-  MLM_data,
-  here("data/MLM_data.csv")
-)
-
-# show first 10 rows
-MLM_data %>%
-  head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
-```
-
-### Statistical Analysis
-
-```{r MLM-test}
-
-# fit a linear mixed-effects model to data
-MLM_results <- lmer(value ~ 1 + X_i + (1 | item_id) + (1 + X_i | subj_id),
-  data = MLM_data
-)
-
-tibble(
-  variable = c(
-    "beta_0",
-    "beta_1",
-    "tau_0",
-    "rho",
-    "tau_1",
-    "omega_0",
-    "sigma"
-  ),
-  explanation = c(
-    "intercept (grand mean)",
-    "fixed effect of category",
-    "by-item random intercept SD",
-    "by-subject random intercept SD",
-    "correlation between intercept and slope",
-    "by-subject random slope SD",
-    "residual (error) SD"
-  ),
-  `simulated value` = c(
-    MLM_mu_grand,
-    MLM_cond_beta,
-    MLM_item_sd,
-    MLM_ssj_sd,
-    MLM_cor_int_slope,
-    MLM_ssjslope_sd,
-    MLM_error_sd
-  ),
-  `estimated by model` = broom.mixed::tidy(MLM_results)$estimate
-) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
-
-```
-
-### Graph
-
-```{r MLM-plot}
-
-MLM_plot <-
-  ggviolin(
-    MLM_data, # data
-    x = "condition", # independent variable
-    y = "value", # dependent variable
-    color = "condition", # density: line color
-    size = 1, # density: line width
-    fill = "condition", # density: fill color
-    alpha = .5, # density: fill color transparency
-    linetype = "solid", # density: line type
-    palette = c("#00AFBB", "#E7B800"), # density: color palette
-    trim = TRUE, # density: trim tails
-    width = 1, # density: violin width
-    add = c("boxplot", "jitter"), # overlay boxplot and jittered individual data points
-    add.params = list(
-      color = "black", # boxplot and jittered points: color
-      fill = "white",# boxplot and jittered points: fill color
-      alpha = .2# boxplot and jittered points: fill transparency
-    ),
-    title = "Multilevel Model", # plot title
-    label.rectangle = TRUE, # rectangle underneath text
-    ggtheme = theme_custom # ggplot theme
-  )
-
-ggsave(
-  filename = "MLM_plot.png",
-  plot = MLM_plot,
-  device = "png",
-  path = here("figures"),
-  width = 8,
-  height = 8,
-  units = "in",
-  dpi = 300
-)
-
-MLM_plot
-
-```
 
 # Generate data from existing dataset
 
