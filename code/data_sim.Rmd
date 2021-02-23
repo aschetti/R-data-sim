@@ -1,6 +1,6 @@
 ---
 title: "Simulate data in R with package `faux`"
-author: '[Antonio Schettino](https://osf.io/zbv65/ "Antonio Schettino")'
+author: '[Antonio Schettino](https://antonio-schettino.com/ "Antonio Schettino")'
 date: '`r Sys.Date()`'
 output:
   html_document:
@@ -25,7 +25,6 @@ set.seed(seed_smorfia) # set RNG seed
 # install.packages("tidyverse")
 # install.packages("faux")
 # install.packages("rstatix")
-# install.packages("ggpubr")
 
 ### load packages
 library(here)
@@ -34,7 +33,6 @@ library(kableExtra)
 library(tidyverse)
 library(faux)
 library(rstatix)
-library(ggpubr)
 
 # for RMarkdown
 # options(digits = 2) # number of decimal digits
@@ -75,15 +73,15 @@ Here are some reasons[^1]:
 
 # Preparation
 
-In preparation for this meeting, you should have installed on your computer:
+In preparation for this workshop, you should have installed on your computer:
 
 - [R](https://cran.r-project.org/)
 - [Rstudio](https://rstudio.com/products/rstudio/download/)
 - R packages:
   - [`here`](https://github.com/r-lib/here), which easily builds folder paths to load and save files
   - [`knitr`](https://github.com/yihui/knitr) and [`kableExtra`](https://github.com/haozhu233/kableExtra), to format the dynamically generated document
-  - [`tidyverse`](https://github.com/tidyverse/tidyverse) and [`ggpubr`](https://github.com/kassambara/ggpubr), for data wrangling and plots
-  - [`faux`](https://github.com/debruine/faux/), to simulate the data
+  - [`tidyverse`](https://github.com/tidyverse/tidyverse), for data wrangling
+  - [`faux`](https://github.com/debruine/faux/), to simulate the data and create plots
   - [`rstatix`](https://github.com/kassambara/rstatix) for statistical analysis
 
 ```{r install-load-pkgs, eval = FALSE}
@@ -95,7 +93,6 @@ install.packages("kableExtra")
 install.packages("tidyverse")
 install.packages("faux")
 install.packages("rstatix")
-install.packages("ggpubr")
 
 ### load packages
 library(here)
@@ -104,7 +101,6 @@ library(kableExtra)
 library(tidyverse)
 library(faux)
 library(rstatix)
-library(ggpubr)
 
 ```
 
@@ -332,7 +328,7 @@ ttest_onesample_results %>%
 
 ```
 
-Results indicate that the mean test score is significantly larger than 0: *t*(`r ttest_onesample_results$df`) = `r ttest_onesample_results$statistic`, *p* = `r format(ttest_onesample_results$p, digits = 3)`.
+Results indicate that the mean test score is significantly larger than 0: *t*(`r ttest_onesample_results$df`) = `r format(ttest_onesample_results$statistic, digits = 3)`, *p* = `r format(ttest_onesample_results$p, digits = 3)`.
 
 ## Between-subject t-test
 
@@ -345,7 +341,7 @@ Let's create the variables that represent this *a priori* information. `faux` wo
 
 ```{r ttest-between-params}
 
-ttest_between_label <- list(treatment = c("placebo", "drug")) # condition names
+ttest_between_label <- list(treatment = c("placebo", "drug")) # treatment labels
 ttest_between_n <- list(placebo = 50, drug = 40) # number of observations per group
 ttest_between_mu_cond <- list(placebo = 1, drug = 2) # means per group
 ttest_between_sd_cond <- list(placebo = 1, drug = 1.4) # standard deviations per group
@@ -451,8 +447,6 @@ ttest_between_param_recovery %>%
 
 ```
 
-Looks ok.
-
 ### Statistical Analysis
 
 Our research hypothesis is that the test scores will be statistically smaller in the `placebo` compared to the `drug` condition. Let's run a one-tailed independent-sample Student's t-test using the `t_test` function:
@@ -482,7 +476,7 @@ Results indicate that the mean test score is significantly smaller in the `place
 
 ## Within-subject t-test
 
-Imagine we show to participants emotional or neutral pictures before the online test. All participants (in this case, N = 50) are presented with all pictures, so this is a within-subject design. Based on published literature and/or our own data collected as part of previous projects, we expect the test scores to follow:
+Imagine we show to one group of participants emotional or neutral pictures before the online test. All participants (in this case, N = 50) are presented with all pictures, so this is a within-subject design. Based on published literature and/or our own data collected as part of previous projects, we expect the test scores to follow:
 
 - a normal distribution with $\mu$ = 1.3 and $\sigma$ = 1.2 in the **neutral** condition
 - a normal distribution with $\mu$ = 2.1 and $\sigma$ = 1.6 in the **emotion** condition
@@ -627,20 +621,20 @@ ttest_within_results %>%
 
 ```
 
-Results indicate that the mean test score is significantly larger in the `emotional` compared to the `neutral` condition: *t*(`r format(ttest_within_results$df, digits = 4)`) = `r format(ttest_within_results$statistic, digits = 3)`, *p* = `r format(ttest_within_results$p, digits = 3)`.
+Results indicate that the mean test score is significantly smaller in the `neutral` compared to the `emotional` condition: *t*(`r format(ttest_within_results$df, digits = 4)`) = `r format(ttest_within_results$statistic, digits = 3)`, *p* = `r format(ttest_within_results$p, digits = 3)`.
 
 ## 2 x 3 mixed ANOVA
 
 Now our hypothetical design gets a bit more complicated. Imagine that, before the online test, we show to participants 50 neutral, 50 pleasant, and 50 unpleasant pictures. Participants are randomly assigned to two groups: one will be administered a drug (N = 30), the other a placebo (N = 40). This is a mixed design. Based on published literature and/or our own data collected as part of previous projects, we expect the following test scores:
 
-* **control** group:
-  - **neutral** condition: normal distribution with $\mu$ = 1 and $\sigma$ = 1
-  - **unpleasant** condition: normal distribution with $\mu$ = 1.5 and $\sigma$ = 1.2
-  - **pleasant** condition: normal distribution with $\mu$ = 1.4 and $\sigma$ = 1.2
-* **drug** group:
-  - **neutral** condition: normal distribution with $\mu$ = 1.1 and $\sigma$ = 1.2
-  - **unpleasant** condition: normal distribution with $\mu$ = 1.4 and $\sigma$ = 1.5
-  - **pleasant** condition: normal distribution with $\mu$ = 2.1 and $\sigma$ = 1.6
+* `control` group:
+  - `neutral` condition: normal distribution with $\mu$ = 1 and $\sigma$ = 1
+  - `unpleasant` condition: normal distribution with $\mu$ = 1.5 and $\sigma$ = 1.2
+  - `pleasant` condition: normal distribution with $\mu$ = 1.4 and $\sigma$ = 1.2
+* `drug` group:
+  - `neutral` condition: normal distribution with $\mu$ = 1.1 and $\sigma$ = 1.2
+  - `unpleasant` condition: normal distribution with $\mu$ = 1.4 and $\sigma$ = 1.5
+  - `pleasant` condition: normal distribution with $\mu$ = 2.1 and $\sigma$ = 1.6
 
 Create the variables:
 
@@ -777,8 +771,6 @@ ANOVA_param_recovery %>%
 
 ```
 
-Looks ok.
-
 ### Statistical Analysis
 
 Let's run a mixed ANOVA on the simulated data. First, the omnibus test:
@@ -824,9 +816,9 @@ ANOVA_pairwise_treatment
 
 ```
 
-Pairwise comparisons suggest that test scores in the `drug` group are statistically larger than in the `control` group only in the `pleasant` condition: *t*(`r format(ANOVA_pairwise_treatment$df[3])`) = `r format(ANOVA_pairwise_treatment$statistic[3])`, *p* = `r format(ANOVA_pairwise_treatment$p[3])`.
+Pairwise comparisons suggest that test scores in the `control` group are statistically smaller than in the `drug` group only in the `pleasant` condition: *t*(`r format(ANOVA_pairwise_treatment$df[3])`) = `r format(ANOVA_pairwise_treatment$statistic[3])`, *p* = `r format(ANOVA_pairwise_treatment$p[3])`.
 
-```{r ANOVA-test-conditio}
+```{r ANOVA-test-condition}
 
 ANOVA_pairwise_condition <-
   ANOVA_data %>%
@@ -845,27 +837,94 @@ ANOVA_pairwise_condition
 
 ```
 
-Within each group, differences among `condition` levels are only observed in the `drug` group, with statistically larger scores in the `pleasant` compared to the `neutral` condition: *t*(`r format(ANOVA_pairwise_condition$df[5])`) = `r format(ANOVA_pairwise_condition$statistic[5], digits = 3)`, *p* = `r format(ANOVA_pairwise_condition$p[5])`.
-
-## ADVANCED: Simulate data with crossed random factors
-
-Until now we have generated, for each participant, mean values for each condition. However, in real-life experiments we typically present participants with a number of trials per condition, and only later on we calculate the mean of these trial-level values. The `faux` package allows to simulate data with crossed random factors
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Within each group, differences among `condition` levels are only observed in the `drug` group, with statistically smaller scores in the `neutral` compared to the `pleasant` condition: *t*(`r format(ANOVA_pairwise_condition$df[5])`) = `r format(ANOVA_pairwise_condition$statistic[5], digits = 3)`, *p* = `r format(ANOVA_pairwise_condition$p[5])`.
 
 # Generate data from existing dataset
+
+`faux` also allows to simulate data similar to an already existing dataset. Let's try and simulate a dataset similar to what we generated for our within-subject t-test example. First, we load the original data:
+
+```{r synth-load-ttest-within-data}
+
+original_ttest_within_data <- 
+  read_csv(
+  here("data", "ttest_within_data.csv"),
+  col_names = TRUE, # keep column names
+  col_types = list(col_factor(), col_factor(), col_double()) # coerce columns 1 and 2 to factors, column 3 to numeric
+)
+
+```
+
+Then we use the function `sim_df` to generate a synthetic dataset from the original data:
+
+```{r synth-gen-ttest-within-data}
+
+# create synthetic data
+synth_ttest_within_data <- 
+  sim_df(
+    original_ttest_within_data,
+    n = 50, # number of samples per group (can be equal to the original or different)
+    within = "condition", # within-subject columns
+    between = c(), # between-subject columns (in this example, none)
+    id = "id", # name of ID column
+    dv = "value", # name of dependent variable column
+    empirical = FALSE # exact mean/SD?
+  ) %>% 
+  pivot_longer(neutral:emotion, names_to = "condition", values_to = "value") %>%
+  as_tibble()
+
+```
+
+Look at the first 10 rows of the synthetic dataset:
+
+```{r synth-ttest-within-data-show}
+
+# show first 10 rows
+synth_ttest_within_data %>%
+  head(n = 10) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+```
+
+Save the data:
+
+```{r synth-ttest-within-data-save}
+
+write_csv(
+  synth_ttest_within_data,
+  here("data", "synth_ttest_within_data.csv")
+)
+
+```
+
+
+
+
+#######################################
+# FROM HERE
+#######################################
+
+
+
+
+
+Plot:
+
+```{r ttest-within-plot}
+
+synth_ttest_within_plot <-
+  synth_ttest_within_data %>%
+  plot_design(geoms = c("box", "violin", "jitter")) +
+  ggtitle("Synthetic data, within-subject t-test") +
+  theme_custom
+
+synth_ttest_within_plot
+
+```
+
+
+
+
 
 
 
@@ -873,8 +932,17 @@ Until now we have generated, for each participant, mean values for each conditio
 
 # Limitations
 
-`faux` only generates samples from normal distributions
-better solution: `synthpop`
+`faux` only generates samples from normal distributions. For more complex datasets, a very flexible option is the R package [`synthpop`](https://cran.r-project.org/web/packages/synthpop/index.html).
+
+
+
+
+
+## ADVANCED: Simulate data with crossed random factors
+
+Until now we have generated, for each participant, mean values for each condition. However, in real-life experiments we typically present participants with a number of trials per condition (and only later on we calculate the mean of these trial-level values). 
+
+The `faux` package allows to simulate data with crossed random factors
 
 
 
@@ -883,10 +951,12 @@ better solution: `synthpop`
 
 https://debruine.github.io/faux/index.html
 
-I started this project as a collection of functions I was writing to help with my own work. It’s one of many, many simulation packages in R; here are some others. I haven’t used most of them, so I can’t vouch for them, but if faux doesn’t meet your needs, one of these might.
+
+many simulation packages in R; here are some others. 
+
 
 - simstudy: Simulation of Study Data
-- simr: Power Analysis of Generalised Linear Mixed Models by Simulation
+- simr: Power Analysis of Generalized Linear Mixed Models by Simulation
 - simulator: streamlines the process of performing simulations by creating a common infrastructure that can be easily used and reused across projects
 - lsasim: Simulate large scale assessment data
 - simmer: Trajectory-based Discrete-Event Simulation (DES)
@@ -895,6 +965,7 @@ I started this project as a collection of functions I was writing to help with m
 
 
 
+# Conclusion
 
 
 
