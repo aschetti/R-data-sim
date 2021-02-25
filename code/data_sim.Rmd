@@ -25,6 +25,7 @@ set.seed(seed_smorfia) # set RNG seed
 # install.packages("tidyverse")
 # install.packages("faux")
 # install.packages("rstatix")
+# install.packages("ggpubr")
 
 ### load packages
 library(here)
@@ -33,6 +34,7 @@ library(kableExtra)
 library(tidyverse)
 library(faux)
 library(rstatix)
+library(ggpubr)
 
 # for RMarkdown
 # options(digits = 2) # number of decimal digits
@@ -80,7 +82,7 @@ In preparation for this workshop, you should have installed on your computer:
 - R packages:
   - [`here`](https://github.com/r-lib/here), which easily builds folder paths to load and save files
   - [`knitr`](https://github.com/yihui/knitr) and [`kableExtra`](https://github.com/haozhu233/kableExtra), to format the dynamically generated document
-  - [`tidyverse`](https://github.com/tidyverse/tidyverse), for data wrangling
+  - [`tidyverse`](https://github.com/tidyverse/tidyverse) and [`ggpubr`](https://github.com/kassambara/ggpubr), for data wrangling and plots
   - [`faux`](https://github.com/debruine/faux/), to simulate the data and create plots
   - [`rstatix`](https://github.com/kassambara/rstatix) for statistical analysis
 
@@ -93,6 +95,7 @@ install.packages("kableExtra")
 install.packages("tidyverse")
 install.packages("faux")
 install.packages("rstatix")
+install.packages("ggpubr")
 
 ### load packages
 library(here)
@@ -101,6 +104,7 @@ library(kableExtra)
 library(tidyverse)
 library(faux)
 library(rstatix)
+library(ggpubr)
 
 ```
 
@@ -122,16 +126,16 @@ theme_custom <-
 
 ```
 
-Last but not least, we need to set the seed for the random number generator. This is very important, because we want to be able to exactly reproduce the data we simulate.
+Finally, we need to set the seed for the random number generator. This is very important, because we want to be able to exactly reproduce the data we simulate.
 
 ```{r seed-rng, eval = FALSE}
 
-seed_smorfia <- 17
-set.seed(seed_smorfia)
+seed_workshop <- 17
+set.seed(seed_workshop)
 
 ```
 
-Now that we have everything, let's start.
+Now that our set up is complete, let's start.
 
 # How to simulate data in R
 
@@ -172,8 +176,8 @@ rnorm_data %>%
     add = c("boxplot", "jitter"), # overlay boxplot and jittered individual data points
     add.params = list(
       color = "black", # boxplot and jittered points: color
-      fill = "white",# boxplot and jittered points: fill color
-      alpha = .2# boxplot and jittered points: fill transparency
+      fill = "white", # boxplot and jittered points: fill color
+      alpha = .2 # boxplot and jittered points: fill transparency
     ),
     title = "Normal distribution", # plot title
     xlab = "", # x-axis: title 
@@ -185,17 +189,15 @@ rnorm_data %>%
 
 Other functions allow you to sample from different distributions, e.g., uniform (`runif`), binomial (`rbinom`), Student's t (`rt`), and more (for a complete list, type `?distributions` in the console).
 
-However, in this workshop we will be using the package `faux`, created by [Prof. Lisa DeBruine](https://www.gla.ac.uk/researchinstitutes/neurosciencepsychology/staff/lisadebruine/). Despite being quite recent, this package is actively maintained and well-documented, and its framework is user-friendly and adaptable to several popular study designs in the social sciences.
-
-The first study design we will simulate is a one-sample t-test.
+However, in this workshop we will be using the package `faux`, created by [Prof. Lisa DeBruine](https://www.gla.ac.uk/researchinstitutes/neurosciencepsychology/staff/lisadebruine/). Despite being quite recent, this package is actively maintained and well-documented, and its framework is user-friendly and adaptable to several popular study designs in the social sciences[^2].
 
 ## One-sample t-test
 
-Imagine we plan to ask a group of 50 participants to complete an online test. Based on published literature and/or our own data collected as part of previous projects, we expect the test scores to follow a normal distribution with $\mu$ = 2 and $\sigma$ = 1. First, let's create the variables that represent this *a priori* information:
+Imagine we plan to ask a group of 50 participants to complete an online test. We assume the test scores to follow a normal distribution with $\mu$ = 2 and $\sigma$ = 1. First, let's create the variables that represent this *a priori* information:
 
 ```{r ttest-onesample-params}
 
-ttest_onesample_label <- list(condition = c("test")) # condition name
+ttest_onesample_label <- list(condition = c("test")) # condition name and levels
 ttest_onesample_n <- 50 # number of participants
 ttest_onesample_mu_cond <- 2 # mean
 ttest_onesample_sd_cond <- 1 # standard deviation
@@ -206,7 +208,6 @@ Now we have all the parameters we need to generate (hypothetical) scores of this
 
 ```{r ttest-onesample-data}
 
-# data simulation
 ttest_onesample_data <-
   sim_design(
     between = ttest_onesample_label, # the data come from one independent group, that's why it's "between-subject"
@@ -279,7 +280,7 @@ ggsave(
 
 ### Parameter recovery
 
-How can we be sure that `faux` correctly sampled from a normal distribution with $\mu$ = 2 and $\sigma$ = 1? The mean and standard deviation of the simulated dataset should be close to what we imputed. They would not be *exactly* the same (because of the probabilistic nature of the sampling), unless you set `empirical = FALSE` when using `sim_design` . Let's verify:
+How can we be sure that `faux` correctly sampled from a normal distribution with $\mu$ = 2 and $\sigma$ = 1? The mean and standard deviation of the simulated dataset should be close to what we imputed. They would not be *exactly* the same (because of the probabilistic nature of the sampling), unless you set `empirical = FALSE` when using `sim_design`. Let's verify:
 
 ```{r ttest-onesample-param-recovery}
 
@@ -300,7 +301,7 @@ ttest_onesample_param_recovery %>%
 
 ```
 
-It seems that `faux` did its job well: the mean of the simulated dataset is `r ttest_onesample_param_recovery$mean` and its standard deviation is `r ttest_onesample_param_recovery$sd`[^2].
+It seems that `faux` did its job well: the mean of the simulated dataset is `r ttest_onesample_param_recovery$mean` and its standard deviation is `r ttest_onesample_param_recovery$sd`[^3].
 
 ### Statistical Analysis
 
@@ -314,8 +315,8 @@ ttest_onesample_results <-
     formula = value ~ 1, # formula
     p.adjust.method = "holm", # p-value adjustment
     paired = FALSE, # paired test?
-    var.equal = TRUE, # assume equal variance?
-    alternative = "greater", # alternative hypothesis (two-sided, larger than mu, smaller than mu)
+    var.equal = TRUE, # assume equal variance? if FALSE, it's a Welch's test
+    alternative = "greater", # alternative hypothesis (either larger or smaller, larger, or smaller than mu)
     mu = 0, # null value
     conf.level = .95, # width confidence intervals
     detailed = FALSE
@@ -332,7 +333,7 @@ Results indicate that the mean test score is significantly larger than 0: *t*(`r
 
 ## Between-subject t-test
 
-Imagine we wish to study the effect of a specific drug vs. placebo on the test scores above. We recruit a total of 90 participants: 40 will be administered the drug, and 50 the placebo. Based on published literature and/or our own data collected as part of previous projects, we expect the test scores to follow:
+Imagine we wish to study the effect of a specific drug vs. placebo on the test scores above. We recruit a total of 90 participants: 40 will be administered the drug, and 50 the placebo. We assume the test scores to follow:
 
 - a normal distribution with $\mu$ = 1 and $\sigma$ = 1 in the **placebo** group
 - a normal distribution with $\mu$ = 2 and $\sigma$ = 1.4 in the **drug** group
@@ -476,7 +477,7 @@ Results indicate that the mean test score is significantly smaller in the `place
 
 ## Within-subject t-test
 
-Imagine we show to one group of participants emotional or neutral pictures before the online test. All participants (in this case, N = 50) are presented with all pictures, so this is a within-subject design. Based on published literature and/or our own data collected as part of previous projects, we expect the test scores to follow:
+Imagine we show to one group of participants emotional or neutral pictures before the online test. All participants (in this case, N = 50) are presented with all pictures, so this is a within-subject design. We assume the test scores to follow:
 
 - a normal distribution with $\mu$ = 1.3 and $\sigma$ = 1.2 in the **neutral** condition
 - a normal distribution with $\mu$ = 2.1 and $\sigma$ = 1.6 in the **emotion** condition
@@ -519,7 +520,6 @@ Look at the first 10 rows of the simulated dataset:
 
 ```{r ttest-within-data-show}
 
-# show first 10 rows
 ttest_within_data %>%
   head(n = 10) %>%
   kable() %>%
@@ -594,8 +594,6 @@ ttest_within_param_recovery %>%
 
 ```
 
-Looks ok.
-
 ### Statistical Analysis
 
 Our research hypothesis is that the test scores will be statistically smaller after exposure to the neutral relative to emotional pictures. Let's run a one-tailed paired-sample Student's t-test:
@@ -625,7 +623,7 @@ Results indicate that the mean test score is significantly smaller in the `neutr
 
 ## 2 x 3 mixed ANOVA
 
-Now our hypothetical design gets a bit more complicated. Imagine that, before the online test, we show to participants 50 neutral, 50 pleasant, and 50 unpleasant pictures. Participants are randomly assigned to two groups: one will be administered a drug (N = 30), the other a placebo (N = 40). This is a mixed design. Based on published literature and/or our own data collected as part of previous projects, we expect the following test scores:
+Now our hypothetical design gets a bit more complicated. Imagine that, before the online test, we show to participants 50 neutral, 50 pleasant, and 50 unpleasant pictures. Participants are randomly assigned to two groups: one will be administered a drug (N = 30), the other a placebo (N = 40). This is a mixed design. We assume the test scores to follow:
 
 * `control` group:
   - `neutral` condition: normal distribution with $\mu$ = 1 and $\sigma$ = 1
@@ -654,8 +652,8 @@ ANOVA_sd_cond <- list(
   control = c(neutral = 1, unpleasant = 1.2, pleasant = 1.2),
   drug = c(neutral = 1.2, unpleasant = 1.5, pleasant = 1.6)
 )
-
-ANOVA_r <- list( # if the design has more than 2 within-subject conditions, specify each correlation in the upper right triangle of the correlation matrix as a vector (https://debruine.github.io/faux/articles/sim_design.html#correlations-1)
+# if the design has more than 2 within-subject conditions, specify each correlation in the upper right triangle of the correlation matrix as a vector (https://debruine.github.io/faux/articles/sim_design.html#correlations-1)
+ANOVA_r <- list(
   control = c(
     .40, .50,
     .60
@@ -695,7 +693,6 @@ Look at the first 10 rows of the simulated dataset:
 
 ```{r ANOVA-data-show}
 
-# show first 10 rows
 ANOVA_data %>%
   head(n = 10) %>%
   kable() %>%
@@ -810,9 +807,12 @@ ANOVA_pairwise_treatment <-
     alternative = "two.sided",
     mu = 0,
     conf.level = 0.95
-  )
+  ) %>% 
+  select(condition, group1, group2, n1, n2, t = statistic, df, p)
 
-ANOVA_pairwise_treatment
+ANOVA_pairwise_treatment %>%
+  kable(digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
@@ -831,9 +831,12 @@ ANOVA_pairwise_condition <-
     alternative = "two.sided",
     mu = 0,
     conf.level = 0.95
-  )
+  ) %>% 
+  select(treatment, group1, group2, n1, n2, t = statistic, df, p.holm = p.adj)
 
-ANOVA_pairwise_condition
+ANOVA_pairwise_condition %>%
+  kable(digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
@@ -841,7 +844,9 @@ Within each group, differences among `condition` levels are only observed in the
 
 # Generate data from existing dataset
 
-`faux` also allows to simulate data similar to an already existing dataset. Let's try and simulate a dataset similar to what we generated for our within-subject t-test example. First, we load the original data:
+Throughout the workshop we have imputed specific means and standard deviations, as well as correlations among within-subject variables. In real-life situations, finding these numbers may not be easy. It is possible to extract these parameters from tables in papers or directly from other datasets, e.g., published by other researchers or collected in previous studies[^4]. 
+
+Thankfully, `faux` allows to simulate data similar to an already existing dataset. Let's try and simulate a dataset similar to what we generated for our within-subject t-test example. First, we load the original data:
 
 ```{r synth-load-ttest-within-data}
 
@@ -858,7 +863,6 @@ Then we use the function `sim_df` to generate a synthetic dataset from the origi
 
 ```{r synth-gen-ttest-within-data}
 
-# create synthetic data
 synth_ttest_within_data <- 
   sim_df(
     original_ttest_within_data,
@@ -878,7 +882,6 @@ Look at the first 10 rows of the synthetic dataset:
 
 ```{r synth-ttest-within-data-show}
 
-# show first 10 rows
 synth_ttest_within_data %>%
   head(n = 10) %>%
   kable() %>%
@@ -897,34 +900,86 @@ write_csv(
 
 ```
 
-
-
-
-#######################################
-# FROM HERE
-#######################################
-
-
-
-
-
 Plot:
 
-```{r ttest-within-plot}
+```{r synth-ttest-within-plot}
 
-synth_ttest_within_plot <-
+synth_ttest_within_plot <- 
   synth_ttest_within_data %>%
-  plot_design(geoms = c("box", "violin", "jitter")) +
-  ggtitle("Synthetic data, within-subject t-test") +
-  theme_custom
+  ggviolin(
+    y = "value",
+    x = "condition",
+    color = "black",
+    size = 1,
+    fill = "condition",
+    alpha = .5,
+    linetype = "solid",
+    trim = TRUE,
+    width = 1,
+    add = c("boxplot", "jitter"),
+    add.params = list(
+      color = "black",
+      fill = "white",
+      alpha = .5
+    ),
+    title = "Synthetic data",
+    xlab = "",
+    label.rectangle = TRUE,
+    ggtheme = theme_custom
+  )
 
 synth_ttest_within_plot
 
 ```
 
+Save the plot:
 
+```{r synth-ttest-within-plot-save}
 
+ggsave(
+  filename = "synth_ttest_within_plot.png",
+  plot = synth_ttest_within_plot,
+  device = "png",
+  path = here("figures"),
+  width = 8,
+  height = 8,
+  units = "in",
+  dpi = 300
+)
 
+```
+
+Recover the parameters: 
+
+```{r synth-ttest-within-param-recovery}
+
+original_ttest_within_param_recovery <-
+  original_ttest_within_data %>%
+  group_by(condition) %>% 
+  get_summary_stats(
+    type = "mean_sd"
+  ) %>% 
+  ungroup() %>% 
+  mutate(data = "original", .before = condition)
+
+synth_ttest_within_param_recovery <-
+  synth_ttest_within_data %>%
+  group_by(condition) %>% 
+  get_summary_stats(
+    type = "mean_sd"
+  ) %>% 
+  ungroup() %>% 
+  mutate(data = "synthetic", .before = condition)
+
+compare_original_synth_ttest_within <-
+  full_join(original_ttest_within_param_recovery, synth_ttest_within_param_recovery) %>% 
+  arrange(condition)
+
+compare_original_synth_ttest_within
+
+```
+
+Yes, `faux` did a decent job.
 
 
 
@@ -938,6 +993,18 @@ synth_ttest_within_plot
 
 
 
+
+
+
+
+problems usually arise when hypothesizing not only means and standard deviations, but especially correlations among variables in within-subject designs
+
+
+It is possible to extract these parameters from tables in papers or other datasets, e.g., published by other researchers or collected in previous studies. Please note that data from small-scale pilot studies are not reliable and should not be used to estimate such parameters[^3].
+
+
+
+
 ## ADVANCED: Simulate data with crossed random factors
 
 Until now we have generated, for each participant, mean values for each condition. However, in real-life experiments we typically present participants with a number of trials per condition (and only later on we calculate the mean of these trial-level values). 
@@ -946,21 +1013,6 @@ The `faux` package allows to simulate data with crossed random factors
 
 
 
-
-# Other simulation packages
-
-https://debruine.github.io/faux/index.html
-
-
-many simulation packages in R; here are some others. 
-
-
-- simstudy: Simulation of Study Data
-- simr: Power Analysis of Generalized Linear Mixed Models by Simulation
-- simulator: streamlines the process of performing simulations by creating a common infrastructure that can be easily used and reused across projects
-- lsasim: Simulate large scale assessment data
-- simmer: Trajectory-based Discrete-Event Simulation (DES)
-- parSim: Parallel Simulation Studies
 
 
 
@@ -981,4 +1033,6 @@ sessionInfo()
 ***
 
 [^1]: Adapted from the book [**Answering questions with data**](https://crumplab.github.io/statistics/index.html) (Chapter [11](https://crumplab.github.io/statistics/simulating-data.html#reasons-to-simulate)) by Matthew J. C. Crump.
-[^2]: I recommend exploring the function `get_summary_stats` from package `rstatix`, especially the argument `type`... it's very comprehensive.
+[^2]: There are many other R packages that allow data simulation, for example [`simstudy`](https://github.com/kgoldfeld/simstudy), [`simr`](https://github.com/pitakakariki/simr), [`simulator`](https://github.com/jacobbien/simulator), [`lsasim`](https://github.com/tmatta/lsasim), [`simmer`](https://github.com/r-simmer/simmer/), and [`parSim`](https://github.com/SachaEpskamp/parSim).
+[^3]: Explore the function `get_summary_stats` from package `rstatix`, especially the argument `type`... it's very comprehensive.
+[^4]: Please note that data from small-scale pilot studies are not reliable and should not be used to estimate such parameters. For a discussion of this issue regarding effect size estimation for statistical power analysis, see [this paper](https://doi.org/10.1016/j.jesp.2017.09.004) by Casper Albers and Daniël Lakens.
