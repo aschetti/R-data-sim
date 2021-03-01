@@ -15,9 +15,6 @@ editor_options:
 
 ```{r doc-setup, include = FALSE}
 
-seed_smorfia <- 17 # 'A disgrazia!
-set.seed(seed_smorfia) # set RNG seed
-
 # ### install packages
 # install.packages("here")
 # install.packages("knitr")
@@ -37,13 +34,19 @@ library(rstatix)
 library(ggpubr)
 
 # for RMarkdown
-# options(digits = 2) # number of decimal digits
+options(digits = 2) # number of decimal digits
 opts_chunk$set(
   echo = TRUE, # show code
   warning = FALSE, # no package warnings
   message = FALSE, # no package messages
   fig.dim = c(8, 8) # figure width & height
 )
+
+# custom kable
+kable_custom <- function(data) {
+  knitr::kable(data, digits = getOption("digits")) %>% 
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+}
 
 ```
 
@@ -128,7 +131,7 @@ theme_custom <-
 
 Finally, we need to set the seed for the random number generator. This is very important, because we want to be able to exactly reproduce the data we simulate.
 
-```{r seed-rng, eval = FALSE}
+```{r seed-rng}
 
 seed_workshop <- 17
 set.seed(seed_workshop)
@@ -153,8 +156,7 @@ Let's look at the first 10 samples:
 
 rnorm_data %>% 
   head(10) %>%
-  kable() %>% # create a fancy table
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) # make it even fancier, thanks to package 'kableExtra'
+  kable_custom() # create a fancy table using packages 'kable' and 'kableExtra' (here is a custom function)
 
 ```
 
@@ -210,7 +212,7 @@ Now we have all the parameters we need to generate (hypothetical) scores of this
 
 ttest_onesample_data <-
   sim_design(
-    between = ttest_onesample_label, # the data come from one independent group, that's why it's "between-subject"
+    between = ttest_onesample_label, # the data come from one independent group, hence "between-subject"
     n = ttest_onesample_n, # number of participants
     mu = ttest_onesample_mu_cond, # mean
     sd = ttest_onesample_sd_cond, # standard deviation
@@ -231,8 +233,7 @@ Let's look at the first 10 rows of the simulated dataset:
 
 ttest_onesample_data %>%
   head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -290,14 +291,14 @@ ttest_onesample_param_recovery <-
     type = "mean_sd"
   ) %>% 
   mutate(
+    n_imputed = ttest_onesample_n,
     mean_imputed = ttest_onesample_mu_cond,
     sd_imputed = ttest_onesample_sd_cond
     ) %>% 
-  select(variable, n, mean, mean_imputed, sd, sd_imputed)
+  select(n, n_imputed, mean, mean_imputed, sd, sd_imputed)
 
 ttest_onesample_param_recovery %>%
-  kable(digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -320,12 +321,12 @@ ttest_onesample_results <-
     mu = 0, # null value
     conf.level = .95, # width confidence intervals
     detailed = FALSE
-  )
+  ) %>% 
+  select(-.y.)
 
 # see the results
 ttest_onesample_results %>%
-  kable(digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -376,8 +377,7 @@ Look at the first 10 rows of the simulated dataset:
 
 ttest_between_data %>%
   head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -437,14 +437,14 @@ ttest_between_param_recovery <-
   ) %>% 
   ungroup() %>% 
   mutate(
+    n_imputed = map_chr(ttest_between_n, toString),
     mean_imputed = map_chr(ttest_between_mu_cond, toString),
     sd_imputed = map_chr(ttest_between_sd_cond, toString)
   ) %>% 
-  select(variable, treatment, n, mean, mean_imputed, sd, sd_imputed)
+  select(treatment, n, n_imputed, mean, mean_imputed, sd, sd_imputed)
 
 ttest_between_param_recovery %>%
-  kable(digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -465,11 +465,11 @@ ttest_between_results <-
     mu = 0,
     conf.level = .95,
     detailed = FALSE
-  )
+  ) %>% 
+  select(-.y.)
 
 ttest_between_results %>%
-  kable(digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -522,8 +522,7 @@ Look at the first 10 rows of the simulated dataset:
 
 ttest_within_data %>%
   head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -583,14 +582,14 @@ ttest_within_param_recovery <-
   ) %>% 
   ungroup() %>% 
   mutate(
+    n_imputed = map_chr(ttest_within_n, toString),
     mean_imputed = map_chr(ttest_within_mu_cond, toString),
     sd_imputed = map_chr(ttest_within_sd_cond, toString)
   ) %>% 
-  select(variable, condition, n, mean, mean_imputed, sd, sd_imputed)
+  select(condition, n, n_imputed, mean, mean_imputed, sd, sd_imputed)
 
 ttest_within_param_recovery %>%
-  kable(digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -611,11 +610,11 @@ ttest_within_results <-
     mu = 0,
     conf.level = .95,
     detailed = FALSE
-  )
+  ) %>% 
+  select(-.y.)
 
 ttest_within_results %>%
-  kable(digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -695,8 +694,7 @@ Look at the first 10 rows of the simulated dataset:
 
 ANOVA_data %>%
   head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -757,14 +755,14 @@ ANOVA_param_recovery <-
   ) %>% 
   ungroup() %>% 
   mutate(
+    n_imputed = c(map_chr(ANOVA_n$control, toString), map_chr(ANOVA_n$drug, toString)),
     mean_imputed = c(map_chr(ANOVA_mu_cond$control, toString), map_chr(ANOVA_mu_cond$drug, toString)),
     sd_imputed = c(map_chr(ANOVA_sd_cond$control, toString), map_chr(ANOVA_sd_cond$drug, toString))
   ) %>% 
-  select(variable, condition, n, mean, mean_imputed, sd, sd_imputed)
+  select(condition, n, n_imputed, mean, mean_imputed, sd, sd_imputed)
 
 ANOVA_param_recovery %>%
-  kable(digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -788,7 +786,8 @@ ANOVA_omnibus <-
   get_anova_table() %>%
   adjust_pvalue(method = "holm")
 
-ANOVA_omnibus
+ANOVA_omnibus %>% 
+  kable_custom()
 
 ```
 
@@ -811,8 +810,7 @@ ANOVA_pairwise_treatment <-
   select(condition, group1, group2, n1, n2, t = statistic, df, p)
 
 ANOVA_pairwise_treatment %>%
-  kable(digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -835,8 +833,7 @@ ANOVA_pairwise_condition <-
   select(treatment, group1, group2, n1, n2, t = statistic, df, p.holm = p.adj)
 
 ANOVA_pairwise_condition %>%
-  kable(digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -866,7 +863,7 @@ Then we use the function `sim_df` to generate a synthetic dataset from the origi
 synth_ttest_within_data <- 
   sim_df(
     original_ttest_within_data,
-    n = 50, # number of samples per group (can be equal to the original or different)
+    n = 50, # number of samples per group (can also be different from the original dataset)
     within = "condition", # within-subject columns
     between = c(), # between-subject columns (in this example, none)
     id = "id", # name of ID column
@@ -884,8 +881,7 @@ Look at the first 10 rows of the synthetic dataset:
 
 synth_ttest_within_data %>%
   head(n = 10) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+  kable_custom()
 
 ```
 
@@ -973,13 +969,15 @@ synth_ttest_within_param_recovery <-
 
 compare_original_synth_ttest_within <-
   full_join(original_ttest_within_param_recovery, synth_ttest_within_param_recovery) %>% 
-  arrange(condition)
+  arrange(condition) %>% 
+  select(-variable)
 
-compare_original_synth_ttest_within
+compare_original_synth_ttest_within %>% 
+  kable_custom()
 
 ```
 
-Yes, `faux` did a decent job.
+Yes, `faux` did a good job.
 
 
 
