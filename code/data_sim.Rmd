@@ -44,37 +44,27 @@ opts_chunk$set(
 
 # custom kable
 kable_custom <- function(data) {
-  knitr::kable(data, digits = getOption("digits")) %>% 
+  knitr::kable(data, digits = getOption("digits")) %>%
     kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 }
+
+# custom ggplot theme
+theme_custom <-
+  theme_pubr(base_size = 16) + # base theme from package 'ggpubr'
+  theme(
+    strip.text = element_text(
+      hjust = .5,
+      size = 20
+    ),
+    plot.title = element_text(size = 26, hjust = .5),
+    legend.box.background = element_rect(color = "transparent"),
+    legend.position = "none"
+  )
 
 ```
 
 ***
 ***
-
-# Why simulate data?
-
-Here are some reasons[^1]:
-
-- analyze your experimental design
-  - number of groups?
-  - number of participants?
-  - number of conditions?
-  - number of trials for each condition?
-- evaluate your statistical procedures
-  - what are the distributional properties of the data?
-  - are model assumptions appropriate?
-- power analysis
-  - what effect size is your experimental design sensitive to?
-  - how does sensitivity change as a function of the number of participants and/or trials?
-- plan data management
-  - size and type of data and model files
-  - folder structure
-- practical feasibility
-  - is there enough information in the literature to simulate plausible scenarios?
-  - is your statistical model computationally feasible?
-  - if the results of the power analysis require a large number of participants and/or trials, do you have enough time and/or resources?
 
 # Preparation
 
@@ -86,7 +76,7 @@ In preparation for this workshop, you should have installed on your computer:
   - [`here`](https://github.com/r-lib/here), which easily builds folder paths to load and save files
   - [`knitr`](https://github.com/yihui/knitr) and [`kableExtra`](https://github.com/haozhu233/kableExtra), to format the dynamically generated document
   - [`tidyverse`](https://github.com/tidyverse/tidyverse) and [`ggpubr`](https://github.com/kassambara/ggpubr), for data wrangling and plots
-  - [`faux`](https://github.com/debruine/faux/), to simulate the data and create plots
+  - [`faux`](https://github.com/debruine/faux/), to simulate data and create plots
   - [`rstatix`](https://github.com/kassambara/rstatix) for statistical analysis
 
 ```{r install-load-pkgs, eval = FALSE}
@@ -111,25 +101,7 @@ library(ggpubr)
 
 ```
 
-Let's also create a custom `ggplot` theme for our graphs:
-
-```{r ggplot-theme}
-
-theme_custom <-
-  theme_pubr(base_size = 16) + # base theme from package 'ggpubr'
-  theme(
-    strip.text = element_text(
-      hjust = .5,
-      size = 20
-    ),
-    plot.title = element_text(size = 26, hjust = .5),
-    legend.box.background = element_rect(color = "transparent"),
-    legend.position = "none"
-  )
-
-```
-
-Finally, we need to set the seed for the random number generator. This is very important, because we want to be able to exactly reproduce the data we simulate.
+We also need to set the seed for the random number generator. This is very important, because we want to be able to exactly reproduce the data we simulate.
 
 ```{r seed-rng}
 
@@ -139,6 +111,29 @@ set.seed(seed_workshop)
 ```
 
 Now that our set up is complete, let's start.
+
+# Why simulate data?
+
+Here are some reasons[^1]:
+
+- analyze your experimental design
+  - number of groups?
+  - number of participants?
+  - number of conditions?
+  - number of trials for each condition?
+- evaluate your statistical procedures
+  - what are the distributional properties of the data?
+  - are model assumptions appropriate?
+- power analysis
+  - what effect size is your experimental design sensitive to?
+  - how does sensitivity change as a function of the number of participants and/or trials?
+- plan data management
+  - size and type of data and model files
+  - folder structure
+- practical feasibility
+  - is there enough information in the literature to simulate plausible scenarios?
+  - is your statistical model computationally feasible?
+  - if the results of the power analysis require a large number of participants and/or trials, do you have enough time and/or resources?
 
 # How to simulate data in R
 
@@ -154,9 +149,9 @@ Let's look at the first 10 samples:
 
 ```{r rnorm-show}
 
-rnorm_data %>% 
+rnorm_data %>%
   head(10) %>%
-  kable_custom() # create a fancy table using packages 'kable' and 'kableExtra' (here is a custom function)
+  kable_custom() # create a fancy table using packages 'kable' and 'kableExtra' (this is a custom function)
 
 ```
 
@@ -182,7 +177,7 @@ rnorm_data %>%
       alpha = .2 # boxplot and jittered points: fill transparency
     ),
     title = "Normal distribution", # plot title
-    xlab = "", # x-axis: title 
+    xlab = "", # x-axis: title
     label.rectangle = TRUE, # rectangle underneath text
     ggtheme = theme_custom # ggplot theme
   )
@@ -223,7 +218,7 @@ ttest_onesample_data <-
     plot = FALSE, # plot?
     rep = 1 # number of simulated datasets
   ) %>%
-  as_tibble()
+  as_tibble() # convert to tibble
 
 ```
 
@@ -234,17 +229,6 @@ Let's look at the first 10 rows of the simulated dataset:
 ttest_onesample_data %>%
   head(n = 10) %>%
   kable_custom()
-
-```
-
-Save the data as *.csv* file:
-
-```{r ttest-onesample-data-save}
-
-write_csv(
-  ttest_onesample_data,
-  here("data", "ttest_onesample_data.csv")
-)
 
 ```
 
@@ -262,7 +246,18 @@ ttest_onesample_plot
 
 ```
 
-Save the plot as *.png* file:
+You can optionally save the data as *.csv* file:
+
+```{r ttest-onesample-data-save}
+
+write_csv(
+  ttest_onesample_data,
+  here("data", "ttest_onesample_data.csv")
+)
+
+```
+
+You can also save the plot as *.png* file:
 
 ```{r ttest-onesample-plot-save}
 
@@ -289,12 +284,12 @@ ttest_onesample_param_recovery <-
   ttest_onesample_data %>%
   get_summary_stats(
     type = "mean_sd"
-  ) %>% 
+  ) %>%
   mutate(
     n_imputed = ttest_onesample_n,
     mean_imputed = ttest_onesample_mu_cond,
     sd_imputed = ttest_onesample_sd_cond
-    ) %>% 
+  ) %>%
   select(n, n_imputed, mean, mean_imputed, sd, sd_imputed)
 
 ttest_onesample_param_recovery %>%
@@ -321,7 +316,7 @@ ttest_onesample_results <-
     mu = 0, # null value
     conf.level = .95, # width confidence intervals
     detailed = FALSE
-  ) %>% 
+  ) %>%
   select(-.y.)
 
 # see the results
@@ -381,17 +376,6 @@ ttest_between_data %>%
 
 ```
 
-Save the data as *.csv* file:
-
-```{r ttest-between-data-save}
-
-write_csv(
-  ttest_between_data,
-  here("data", "ttest_between_data.csv")
-)
-
-```
-
 Plot using the `plot_design` function in `faux`:
 
 ```{r ttest-between-plot}
@@ -406,10 +390,19 @@ ttest_between_plot
 
 ```
 
-Save the plot as *.png* file:
+```{r ttest-between-data-save, include = FALSE}
 
-```{r ttest-between-plot-save}
+# save data
+write_csv(
+  ttest_between_data,
+  here("data", "ttest_between_data.csv")
+)
 
+```
+
+```{r ttest-between-plot-save, include = FALSE}
+
+# save plot
 ggsave(
   filename = "ttest_between_plot.png",
   plot = ttest_between_plot,
@@ -431,16 +424,16 @@ Verify that `faux` correctly sampled from the two normal distributions indicated
 
 ttest_between_param_recovery <-
   ttest_between_data %>%
-  group_by(treatment) %>% 
+  group_by(treatment) %>%
   get_summary_stats(
     type = "mean_sd"
-  ) %>% 
-  ungroup() %>% 
+  ) %>%
+  ungroup() %>%
   mutate(
     n_imputed = map_chr(ttest_between_n, toString),
     mean_imputed = map_chr(ttest_between_mu_cond, toString),
     sd_imputed = map_chr(ttest_between_sd_cond, toString)
-  ) %>% 
+  ) %>%
   select(treatment, n, n_imputed, mean, mean_imputed, sd, sd_imputed)
 
 ttest_between_param_recovery %>%
@@ -465,7 +458,7 @@ ttest_between_results <-
     mu = 0,
     conf.level = .95,
     detailed = FALSE
-  ) %>% 
+  ) %>%
   select(-.y.)
 
 ttest_between_results %>%
@@ -526,17 +519,6 @@ ttest_within_data %>%
 
 ```
 
-Save the data:
-
-```{r ttest-within-data-save}
-
-write_csv(
-  ttest_within_data,
-  here("data", "ttest_within_data.csv")
-)
-
-```
-
 Plot:
 
 ```{r ttest-within-plot}
@@ -551,10 +533,19 @@ ttest_within_plot
 
 ```
 
-Save the plot:
+```{r ttest-within-data-save, include = FALSE}
 
-```{r ttest-within-plot-save}
+# save data
+write_csv(
+  ttest_within_data,
+  here("data", "ttest_within_data.csv")
+)
 
+```
+
+```{r ttest-within-plot-save, include = FALSE}
+
+# save plot
 ggsave(
   filename = "ttest_within_plot.png",
   plot = ttest_within_plot,
@@ -576,16 +567,16 @@ Verify that `faux` correctly sampled from the two normal distributions indicated
 
 ttest_within_param_recovery <-
   ttest_within_data %>%
-  group_by(condition) %>% 
+  group_by(condition) %>%
   get_summary_stats(
     type = "mean_sd"
-  ) %>% 
-  ungroup() %>% 
+  ) %>%
+  ungroup() %>%
   mutate(
     n_imputed = map_chr(ttest_within_n, toString),
     mean_imputed = map_chr(ttest_within_mu_cond, toString),
     sd_imputed = map_chr(ttest_within_sd_cond, toString)
-  ) %>% 
+  ) %>%
   select(condition, n, n_imputed, mean, mean_imputed, sd, sd_imputed)
 
 ttest_within_param_recovery %>%
@@ -610,7 +601,7 @@ ttest_within_results <-
     mu = 0,
     conf.level = .95,
     detailed = FALSE
-  ) %>% 
+  ) %>%
   select(-.y.)
 
 ttest_within_results %>%
@@ -698,17 +689,6 @@ ANOVA_data %>%
 
 ```
 
-Save the data:
-
-```{r ANOVA-data-save}
-
-write_csv(
-  ANOVA_data,
-  here("data/ANOVA_data.csv")
-)
-
-```
-
 Plot:
 
 ```{r ANOVA-plot}
@@ -724,10 +704,19 @@ ANOVA_plot
 
 ```
 
-Save the plot:
+```{r ANOVA-data-save, include = FALSE}
 
-```{r ANOVA-plot-save}
+# save data
+write_csv(
+  ANOVA_data,
+  here("data/ANOVA_data.csv")
+)
 
+```
+
+```{r ANOVA-plot-save, include = FALSE}
+
+# save plot
 ggsave(
   filename = "ANOVA_plot.png",
   plot = ANOVA_plot,
@@ -749,16 +738,16 @@ Verify that `faux` correctly sampled from the normal distributions indicated abo
 
 ANOVA_param_recovery <-
   ANOVA_data %>%
-  group_by(treatment, condition) %>% 
+  group_by(treatment, condition) %>%
   get_summary_stats(
     type = "mean_sd"
-  ) %>% 
-  ungroup() %>% 
+  ) %>%
+  ungroup() %>%
   mutate(
     n_imputed = c(map_chr(ANOVA_n$control, toString), map_chr(ANOVA_n$drug, toString)),
     mean_imputed = c(map_chr(ANOVA_mu_cond$control, toString), map_chr(ANOVA_mu_cond$drug, toString)),
     sd_imputed = c(map_chr(ANOVA_sd_cond$control, toString), map_chr(ANOVA_sd_cond$drug, toString))
-  ) %>% 
+  ) %>%
   select(condition, n, n_imputed, mean, mean_imputed, sd, sd_imputed)
 
 ANOVA_param_recovery %>%
@@ -784,14 +773,16 @@ ANOVA_omnibus <-
     detailed = FALSE
   ) %>%
   get_anova_table() %>%
-  adjust_pvalue(method = "holm")
+  adjust_pvalue(method = "holm") %>% 
+  as_tibble() %>% 
+  select("Effect", "DFn", "DFd", "F", "p.adj", "ges")
 
-ANOVA_omnibus %>% 
+ANOVA_omnibus %>%
   kable_custom()
 
 ```
 
-Results show a statistically significant main effect of `condition` (*F*(`r format(ANOVA_omnibus$DFn[2])`, `r format(ANOVA_omnibus$DFd[2])`) = `r format(ANOVA_omnibus$F[2])`, *p* = `r format(ANOVA_omnibus$p.adj[2])`, $\eta_{G}^{2}$ = `r format(ANOVA_omnibus$ges[2], digits = 3)`) and `treatment` x `condition` (*F*(`r format(ANOVA_omnibus$DFn[3])`, `r format(ANOVA_omnibus$DFd[3])`) = `r format(ANOVA_omnibus$F[3])`, *p* = `r format(ANOVA_omnibus$p.adj[3])`, $\eta_{G}^{2}$ = `r format(ANOVA_omnibus$ges[3], digits = 3)`).
+Results show a statistically significant main effect of `condition` (*F*(`r format(ANOVA_omnibus$DFn[2])`, `r format(ANOVA_omnibus$DFd[2])`) = `r format(ANOVA_omnibus$F[2])`, *p* = `r format(ANOVA_omnibus$p.adj[2])`, $\eta_{G}^{2}$ = `r format(ANOVA_omnibus$ges[2], digits = 3)`) and `treatment x condition` (*F*(`r format(ANOVA_omnibus$DFn[3])`, `r format(ANOVA_omnibus$DFd[3])`) = `r format(ANOVA_omnibus$F[3])`, *p* = `r format(ANOVA_omnibus$p.adj[3])`, $\eta_{G}^{2}$ = `r format(ANOVA_omnibus$ges[3], digits = 3)`).
 
 ```{r ANOVA-test-treatment}
 
@@ -806,7 +797,7 @@ ANOVA_pairwise_treatment <-
     alternative = "two.sided",
     mu = 0,
     conf.level = 0.95
-  ) %>% 
+  ) %>%
   select(condition, group1, group2, n1, n2, t = statistic, df, p)
 
 ANOVA_pairwise_treatment %>%
@@ -814,7 +805,7 @@ ANOVA_pairwise_treatment %>%
 
 ```
 
-Pairwise comparisons suggest that test scores in the `control` group are statistically smaller than in the `drug` group only in the `pleasant` condition: *t*(`r format(ANOVA_pairwise_treatment$df[3])`) = `r format(ANOVA_pairwise_treatment$statistic[3])`, *p* = `r format(ANOVA_pairwise_treatment$p[3])`.
+Pairwise comparisons suggest that test scores in the `control` group are statistically smaller than in the `drug` group only in the `pleasant` condition: *t*(`r format(ANOVA_pairwise_treatment$df[3])`) = `r format(ANOVA_pairwise_treatment$t[3])`, *p* = `r format(ANOVA_pairwise_treatment$p[3])`.
 
 ```{r ANOVA-test-condition}
 
@@ -829,7 +820,7 @@ ANOVA_pairwise_condition <-
     alternative = "two.sided",
     mu = 0,
     conf.level = 0.95
-  ) %>% 
+  ) %>%
   select(treatment, group1, group2, n1, n2, t = statistic, df, p.holm = p.adj)
 
 ANOVA_pairwise_condition %>%
@@ -837,30 +828,30 @@ ANOVA_pairwise_condition %>%
 
 ```
 
-Within each group, differences among `condition` levels are only observed in the `drug` group, with statistically smaller scores in the `neutral` compared to the `pleasant` condition: *t*(`r format(ANOVA_pairwise_condition$df[5])`) = `r format(ANOVA_pairwise_condition$statistic[5], digits = 3)`, *p* = `r format(ANOVA_pairwise_condition$p[5])`.
+Within each group, differences among `condition` levels are only observed in the `drug` group, with statistically smaller scores in the `neutral` compared to the `pleasant` condition: *t*(`r format(ANOVA_pairwise_condition$df[5])`) = `r format(ANOVA_pairwise_condition$t[5], digits = 3)`, *p* = `r format(ANOVA_pairwise_condition$p.holm[5])`.
 
 # Generate data from existing dataset
 
-Throughout the workshop we have imputed specific means and standard deviations, as well as correlations among within-subject variables. In real-life situations, finding these numbers may not be easy. It is possible to extract these parameters from tables in papers or directly from other datasets, e.g., published by other researchers or collected in previous studies[^4]. 
+Throughout this workshop we have imputed specific means and standard deviations, as well as correlations among within-subject variables. In real-life situations, finding these numbers may not be easy. It is possible to extract these parameters from tables in papers or directly from other datasets, e.g., published by other researchers or collected in previous studies[^4].
 
 Thankfully, `faux` allows to simulate data similar to an already existing dataset. Let's try and simulate a dataset similar to what we generated for our within-subject t-test example. First, we load the original data:
 
 ```{r synth-load-ttest-within-data}
 
-original_ttest_within_data <- 
+original_ttest_within_data <-
   read_csv(
-  here("data", "ttest_within_data.csv"),
-  col_names = TRUE, # keep column names
-  col_types = list(col_factor(), col_factor(), col_double()) # coerce columns 1 and 2 to factors, column 3 to numeric
-)
+    here("data", "ttest_within_data.csv"),
+    col_names = TRUE, # keep column names
+    col_types = list(col_factor(), col_factor(), col_double()) # coerce columns 1 and 2 to factors, column 3 to numeric
+  )
 
 ```
 
-Then we use the function `sim_df` to generate a synthetic dataset from the original data:
+Then we use the function `sim_df` to generate a **synthetic** dataset from the original data:
 
 ```{r synth-gen-ttest-within-data}
 
-synth_ttest_within_data <- 
+synth_ttest_within_data <-
   sim_df(
     original_ttest_within_data,
     n = 50, # number of samples per group (can also be different from the original dataset)
@@ -869,7 +860,7 @@ synth_ttest_within_data <-
     id = "id", # name of ID column
     dv = "value", # name of dependent variable column
     empirical = FALSE # exact mean/SD?
-  ) %>% 
+  ) %>%
   pivot_longer(neutral:emotion, names_to = "condition", values_to = "value") %>%
   as_tibble()
 
@@ -885,22 +876,11 @@ synth_ttest_within_data %>%
 
 ```
 
-Save the data:
-
-```{r synth-ttest-within-data-save}
-
-write_csv(
-  synth_ttest_within_data,
-  here("data", "synth_ttest_within_data.csv")
-)
-
-```
-
 Plot:
 
 ```{r synth-ttest-within-plot}
 
-synth_ttest_within_plot <- 
+synth_ttest_within_plot <-
   synth_ttest_within_data %>%
   ggviolin(
     y = "value",
@@ -928,10 +908,19 @@ synth_ttest_within_plot
 
 ```
 
-Save the plot:
+```{r synth-ttest-within-data-save, include = FALSE}
 
-```{r synth-ttest-within-plot-save}
+# save data
+write_csv(
+  synth_ttest_within_data,
+  here("data", "synth_ttest_within_data.csv")
+)
 
+```
+
+```{r synth-ttest-within-plot-save, include = FALSE}
+
+# save plot
 ggsave(
   filename = "synth_ttest_within_plot.png",
   plot = synth_ttest_within_plot,
@@ -951,69 +940,47 @@ Recover the parameters:
 
 original_ttest_within_param_recovery <-
   original_ttest_within_data %>%
-  group_by(condition) %>% 
+  group_by(condition) %>%
   get_summary_stats(
     type = "mean_sd"
-  ) %>% 
-  ungroup() %>% 
+  ) %>%
+  ungroup() %>%
   mutate(data = "original", .before = condition)
 
 synth_ttest_within_param_recovery <-
   synth_ttest_within_data %>%
-  group_by(condition) %>% 
+  group_by(condition) %>%
   get_summary_stats(
     type = "mean_sd"
-  ) %>% 
-  ungroup() %>% 
+  ) %>%
+  ungroup() %>%
   mutate(data = "synthetic", .before = condition)
 
 compare_original_synth_ttest_within <-
-  full_join(original_ttest_within_param_recovery, synth_ttest_within_param_recovery) %>% 
-  arrange(condition) %>% 
+  full_join(original_ttest_within_param_recovery, synth_ttest_within_param_recovery) %>%
+  arrange(condition) %>%
   select(-variable)
 
-compare_original_synth_ttest_within %>% 
+compare_original_synth_ttest_within %>%
   kable_custom()
 
 ```
 
 Yes, `faux` did a good job.
 
-
-
-
-
 # Limitations
 
-`faux` only generates samples from normal distributions. For more complex datasets, a very flexible option is the R package [`synthpop`](https://cran.r-project.org/web/packages/synthpop/index.html).
+## The tiranny of normality
 
+At present, `faux` only generates samples from normal distributions. As mentioned earlier, base `R` functions allow to simulate data from non-normal distributions. This is a good solution for between-subject designs, but more complex designs with correlated variables may be more difficult to set up. In these situations, better consult a statistician.
 
+If you wish to generate data similar to an already existing dataset, I recommend the R package [`synthpop`](https://cran.r-project.org/web/packages/synthpop/index.html). A separate workshop demonstrates how to use this great package to generate synthetic data of various complexity.
 
-
-
-
-
-
-
-problems usually arise when hypothesizing not only means and standard deviations, but especially correlations among variables in within-subject designs
-
-
-It is possible to extract these parameters from tables in papers or other datasets, e.g., published by other researchers or collected in previous studies. Please note that data from small-scale pilot studies are not reliable and should not be used to estimate such parameters[^3].
-
-
-
-
-## ADVANCED: Simulate data with crossed random factors
+## Simulate data with crossed random factors
 
 Until now we have generated, for each participant, mean values for each condition. However, in real-life experiments we typically present participants with a number of trials per condition (and only later on we calculate the mean of these trial-level values). 
 
-The `faux` package allows to simulate data with crossed random factors
-
-
-
-
-
-
+The `faux` package allows to simulate data with crossed random factors. However, at the moment the procedure is a bit more complex so it would require its own workshop.
 
 # Conclusion
 
