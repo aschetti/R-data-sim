@@ -186,7 +186,7 @@ rnorm_data %>%
 
 Other functions allow you to sample from different distributions, e.g., uniform (`runif`), binomial (`rbinom`), Student's t (`rt`), and more (for a complete list, type `?distributions` in the console).
 
-However, in this workshop we will be using the package `faux`, created by [Prof. Lisa DeBruine](https://www.gla.ac.uk/researchinstitutes/neurosciencepsychology/staff/lisadebruine/). Despite being quite recent, this package is actively maintained and well-documented, and its framework is user-friendly and adaptable to several popular study designs in the social sciences[^2].
+However, in this workshop we will be using the package `faux`, created by [Prof. Lisa DeBruine](https://www.gla.ac.uk/researchinstitutes/neurosciencepsychology/staff/lisadebruine/). Despite being quite recent, this package is actively maintained and well-documented, and its framework is user-friendly and adaptable to several popular study designs in the social sciences.
 
 ## One-sample t-test
 
@@ -297,7 +297,7 @@ ttest_onesample_param_recovery %>%
 
 ```
 
-It seems that `faux` did its job well: the mean of the simulated dataset is `r ttest_onesample_param_recovery$mean` and its standard deviation is `r ttest_onesample_param_recovery$sd`[^3].
+It seems that `faux` did its job well: the mean of the simulated dataset is `r ttest_onesample_param_recovery$mean` and its standard deviation is `r ttest_onesample_param_recovery$sd`[^2].
 
 ### Statistical Analysis
 
@@ -832,7 +832,7 @@ Within each group, differences among `condition` levels are only observed in the
 
 # Generate data from existing dataset
 
-Throughout this workshop we have imputed specific means and standard deviations, as well as correlations among within-subject variables. In real-life situations, finding these numbers may not be easy. It is possible to extract these parameters from tables in papers or directly from other datasets, e.g., published by other researchers or collected in previous studies[^4].
+Throughout this workshop we have imputed specific means and standard deviations, as well as correlations among within-subject variables. In real-life situations, finding these numbers may not be easy. It is possible to extract these parameters from tables in papers or directly from other datasets, e.g., published by other researchers or collected in previous studies[^3].
 
 Thankfully, `faux` allows to simulate data similar to an already existing dataset. Let's try and simulate a dataset similar to what we generated for our within-subject t-test example. First, we load the original data:
 
@@ -972,19 +972,19 @@ Yes, `faux` did a good job.
 
 ## The tiranny of normality
 
-At present, `faux` only generates samples from normal distributions. As mentioned earlier, base `R` functions allow to simulate data from non-normal distributions (follow [this link](https://aosmith.shinyapps.io/tutorial_simulation_helper_functions/) for a nice interactive tutorial by [Ariel Muldoon](https://twitter.com/aosmith16)). This is a good solution for between-subject designs, but more complex designs with correlated variables may be more difficult to set up. In these situations, better consult a statistician.
+At present, `faux` only generates samples from normal distributions. As mentioned earlier, base `R` functions allow to simulate data from non-normal distributions (follow [this link](https://aosmith.shinyapps.io/tutorial_simulation_helper_functions/) for a nice interactive tutorial by [Ariel Muldoon](https://ariel.rbind.io/)). This is a good solution for between-subject designs, but more complex designs with correlated variables may be more difficult to set up. Another versatile option is the package [`simstudy`](https://kgoldfeld.github.io/simstudy/index.html), which also has useful [vignettes](https://kgoldfeld.github.io/simstudy/articles/simstudy.html). Nonetheless, when dealing with more complex situations, it is advised to consult a statistician.
 
-If you wish to generate data similar to an already existing dataset, I recommend the R package [`synthpop`](https://cran.r-project.org/web/packages/synthpop/index.html). A separate workshop demonstrates how to use this great package to generate synthetic data of various complexity.
+If you wish to generate data similar to an already existing dataset, I recommend the  [`synthpop`](https://cran.r-project.org/web/packages/synthpop/index.html). A separate workshop demonstrates how to use this great package to generate synthetic data of various complexity.
 
 ## Simulate data with crossed random factors
 
 Until now we have generated, for each participant, mean values for each condition. However, in real-life experiments we typically present participants with a number of trials per condition (and only later on we calculate the mean of these trial-level values). 
 
-The `faux` package allows to simulate data with crossed random factors. However, at the moment the procedure is a bit more complex so it would require its own workshop.
+The `faux` package allows to simulate data with crossed random factors. However, at the moment the procedure is a bit more complex so it would require its own workshop. If you are curious, check out [this vignette](https://debruine.github.io/lmem_sim/articles/appendix1a_example_code.html).
 
 # Conclusion
 
-
+I hope this introductory workshop managed to give you a first gentle push to start generating your own data in R. Happy simulations!
 
 # Session Info
 
@@ -998,6 +998,5 @@ sessionInfo()
 ***
 
 [^1]: Adapted from the book [**Answering questions with data**](https://crumplab.github.io/statistics/index.html) (Chapter [11](https://crumplab.github.io/statistics/simulating-data.html#reasons-to-simulate)) by Matthew J. C. Crump.
-[^2]: There are many other R packages that allow data simulation, for example [`simstudy`](https://github.com/kgoldfeld/simstudy), [`simr`](https://github.com/pitakakariki/simr), [`simulator`](https://github.com/jacobbien/simulator), [`lsasim`](https://github.com/tmatta/lsasim), [`simmer`](https://github.com/r-simmer/simmer/), and [`parSim`](https://github.com/SachaEpskamp/parSim).
-[^3]: Explore the function `get_summary_stats` from package `rstatix`, especially the argument `type`... it's very comprehensive.
-[^4]: Please note that data from small-scale pilot studies are not reliable and should not be used to estimate such parameters. For a discussion of this issue regarding effect size estimation for statistical power analysis, see [this paper](https://doi.org/10.1016/j.jesp.2017.09.004) by Casper Albers and Daniël Lakens.
+[^2]: Explore the function `get_summary_stats` from package `rstatix`, especially the argument `type`... it's very comprehensive.
+[^3]: Please note that data from small-scale pilot studies are not reliable and should not be used to estimate such parameters. For a discussion of this issue regarding effect size estimation for statistical power analysis, see [this paper](https://doi.org/10.1016/j.jesp.2017.09.004) by Casper Albers and Daniël Lakens.

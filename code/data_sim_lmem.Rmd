@@ -39,7 +39,7 @@ library(broom.mixed)
 library(ggpubr)
 
 # for RMarkdown
-# options(digits = 2) # number of decimal digits
+options(digits = 2) # number of decimal digits
 opts_chunk$set(
   echo = TRUE, # show code
   warning = FALSE, # no package warnings
@@ -47,33 +47,29 @@ opts_chunk$set(
   fig.dim = c(8, 8) # figure width & height
 )
 
+# custom kable
+kable_custom <- function(data) {
+  knitr::kable(data, digits = getOption("digits")) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+}
+
+# custom ggplot theme
+theme_custom <-
+  theme_pubr(base_size = 16) + # base theme from package 'ggpubr'
+  theme(
+    strip.text = element_text(
+      hjust = .5,
+      size = 20
+    ),
+    plot.title = element_text(size = 26, hjust = .5),
+    legend.box.background = element_rect(color = "transparent"),
+    legend.position = "none"
+  )
+
 ```
 
 ***
 ***
-
-# Why simulate data?
-
-Here are some reasons[^1]:
-
-- analyze your experimental design
-  - number of groups?
-  - number of participants?
-  - number of conditions?
-  - number of trials for each condition?
-- evaluate your statistical procedures
-  - what are the distributional properties of the data?
-  - are model assumptions appropriate?
-- power analysis
-  - what effect size is your experimental design sensitive to?
-  - how does sensitivity change as a function of the number of participants and/or trials?
-- plan data management
-  - size and type of data and model files
-  - folder structure
-- practical feasibility
-  - is there enough information in the literature to simulate plausible scenarios?
-  - is your statistical model computationally feasible?
-  - if the results of the power analysis require a large number of participants and/or trials, do you have enough time and/or resources?
 
 # Preparation
 
@@ -87,6 +83,7 @@ In preparation for this meeting, you should have installed on your computer:
   - [`tidyverse`](https://github.com/tidyverse/tidyverse) and [`ggpubr`](https://github.com/kassambara/ggpubr), for data wrangling and plots
   - [`faux`](https://github.com/debruine/faux/), to simulate the data
   - [`broom.mixed`](https://github.com/bbolker/broom.mixed), for easier extraction of the results of the multilevel model
+  - [`lme4`](https://github.com/lme4/lme4/), for model fitting and parameter extraction
 
 ```{r install-load-pkgs, eval = FALSE}
 
@@ -112,34 +109,53 @@ library(ggpubr)
 
 ```
 
-Let's also create a custom `ggplot` theme for our graphs:
+We also need to set the seed for the random number generator. This is very important, because we want to be able to exactly reproduce the data we simulate.
 
-```{r ggplot-theme}
+```{r seed-rng}
 
-theme_custom <-
-  theme_pubr(base_size = 16) + # base theme from package 'ggpubr'
-  theme(
-    strip.text = element_text(
-      hjust = .5,
-      size = 20
-    ),
-    plot.title = element_text(size = 26, hjust = .5),
-    legend.box.background = element_rect(color = "transparent"),
-    legend.position = "none"
-  )
+seed_workshop <- 17
+set.seed(seed_workshop)
 
 ```
 
-Last but not least, we need to set the seed for the random number generator. This is very important, because we want to be able to exactly reproduce the data we simulate.
+Now that our set up is complete, let's start.
 
-```{r seed-rng, eval = FALSE}
 
-seed_smorfia <- 17
-set.seed(seed_smorfia)
 
-```
 
-Now that we have everything, let's start.
+
+
+
+
+
+
+# Why simulate data?
+
+Here are some reasons[^1]:
+
+- analyze your experimental design
+  - number of groups?
+  - number of participants?
+  - number of conditions?
+  - number of trials for each condition?
+- evaluate your statistical procedures
+  - what are the distributional properties of the data?
+  - are model assumptions appropriate?
+- power analysis
+  - what effect size is your experimental design sensitive to?
+  - how does sensitivity change as a function of the number of participants and/or trials?
+- plan data management
+  - size and type of data and model files
+  - folder structure
+- practical feasibility
+  - is there enough information in the literature to simulate plausible scenarios?
+  - is your statistical model computationally feasible?
+  - if the results of the power analysis require a large number of participants and/or trials, do you have enough time and/or resources?
+
+
+
+
+
 
 
 in this workshop we will be using the package `faux`, created by [Prof. Lisa DeBruine](https://www.gla.ac.uk/researchinstitutes/neurosciencepsychology/staff/lisadebruine/). Despite being quite recent, this package is actively maintained and well-documented, and its framework is user-friendly and adaptable to several popular study designs in the social sciences.
