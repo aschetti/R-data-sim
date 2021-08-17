@@ -974,7 +974,7 @@ Yes, `faux` did a good job.
 
 At present, `faux` only generates samples from normal distributions. As mentioned earlier, base `R` functions allow to simulate data from non-normal distributions (follow [this link](https://aosmith.shinyapps.io/tutorial_simulation_helper_functions/) for a nice interactive tutorial by [Ariel Muldoon](https://ariel.rbind.io/)). This is a good solution for between-subject designs, but more complex designs with correlated variables may be more difficult to set up. Another versatile option is the package [`simstudy`](https://kgoldfeld.github.io/simstudy/index.html), which also has useful [vignettes](https://kgoldfeld.github.io/simstudy/articles/simstudy.html). Nonetheless, when dealing with more complex situations, it is advised to consult a statistician.
 
-If you wish to generate data similar to an already existing dataset, I recommend the  [`synthpop`](https://cran.r-project.org/web/packages/synthpop/index.html). A separate workshop demonstrates how to use this great package to generate synthetic data of various complexity.
+If you wish to generate data similar to an already existing dataset, I recommend the  [`synthpop`](https://cran.r-project.org/web/packages/synthpop/index.html) package. A separate workshop demonstrates how to use this great package to generate synthetic data of various complexity.
 
 ## Simulate data with crossed random factors
 
